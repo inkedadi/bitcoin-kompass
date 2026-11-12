@@ -73,7 +73,7 @@
 			<key>Precomposed</key>
 			<true/>
 			<key>URL</key>
-			<string>https://bitcoin-dashboard-live.netlify.app/</string>
+			<string>https://inkedadi.github.io/bitcoin-dashboard/</string>
 		</dict>
 	</array>
 	<key>PayloadDescription</key>
