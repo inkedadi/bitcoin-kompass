@@ -1,0 +1,1129 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0d1117">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Bitcoin Dashboard">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Bitcoin Dashboard</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%23F7931A'/%3E%3Ctext x='32' y='47' font-size='42' font-weight='700' font-family='Segoe UI,Arial,sans-serif' text-anchor='middle' fill='white'%3E%E2%82%BF%3C/text%3E%3C/svg%3E">
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --line:#2a313c; --fg:#e6edf3; --mut:#8b98a8; --ok:#3fb950; --bad:#f85149; --grid:#222a35;
+          --c0:#2EC4FF; --c1:#f5a623; --c2:#b388ff; --c3:#8b98a8; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--fg); font: 15px/1.5 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; min-height: 100vh;
+    background: radial-gradient(900px 480px at 12% -8%, color-mix(in srgb, var(--c0) 16%, transparent), transparent 70%),
+                radial-gradient(700px 420px at 100% 0%, color-mix(in srgb, var(--c2) 12%, transparent), transparent 70%), var(--bg); background-attachment: fixed; }
+  .bk { max-width: 1280px; margin: 0 auto; padding: max(24px, env(safe-area-inset-top)) 16px 56px; display: grid; gap: 26px; }
+  h1 { font-size: clamp(26px, 4.6vw, 44px); font-weight: 900; margin: 12px 0 6px; line-height: 1.1; letter-spacing: .06em; text-transform: uppercase;
+    background: linear-gradient(90deg, #F7931A, #ffd27a 45%, var(--c0)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  h2 { font-size: 17px; font-weight: 650; margin: 0 0 4px; letter-spacing: -.01em; }
+  section > .bar h2, section.card > h2 { padding-left: 10px; border-left: 3px solid var(--c0); }
+  .hero { display: grid; grid-template-columns: 1fr auto; gap: 20px 32px; align-items: center; padding: 26px 28px;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--c0) 13%, var(--panel)), var(--panel) 55%); }
+  @media (max-width: 720px) { .hero { grid-template-columns: 1fr; padding: 20px; } .gauge { justify-self: start; } }
+  .hero:has(.gauge[hidden]) { grid-template-columns: 1fr; }   /* ohne Fear & Greed keine leere Spalte */
+  .eyebrow { font-size: 13px; color: var(--mut); display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
+  .kurs-label { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 14px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #e6edf3; }   /* Weiß mit grünem Zeichen: hebt sich von der orange-blauen Überschrift ab */
+  .btc-badge { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #3ddc97; color: #0d1117; font-size: 15px; letter-spacing: 0; }
+  .live-pill { font-size: 10px; letter-spacing: .1em; padding: 2px 7px; border-radius: 999px; border: 1px solid currentColor; color: #3ddc97; }
+  .price { font-size: clamp(38px, 7vw, 60px); font-weight: 700; letter-spacing: -.03em; line-height: 1.1; font-variant-numeric: tabular-nums; margin: 2px 0 10px; }
+  .eur { font-size: .5em; font-weight: 600; color: var(--mut); letter-spacing: -.01em; margin: 0 .25em; white-space: nowrap; }
+  .chg { font-size: 16px; font-weight: 650; letter-spacing: 0; padding: 3px 10px; border-radius: 999px; vertical-align: middle; white-space: nowrap; }
+  .chg.up { background: color-mix(in srgb, var(--ok) 16%, transparent); } .chg.down { background: color-mix(in srgb, var(--bad) 16%, transparent); }
+  .ampel-leg { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13px; color: var(--mut); margin-top: 8px; }
+  .ampel-leg i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+  .gauge { text-align: center; } .gauge .g-t { font-size: 13px; color: var(--mut); }
+  .g-v { fill: var(--fg); font-size: 40px; font-weight: 700; } .g-l { fill: var(--mut); font-size: 13px; } .g-e { fill: var(--mut); font-size: 11px; }
+  .spark { display: block; width: 100%; height: 34px; margin-top: 10px; }
+  .track { position: relative; display: flex; height: 6px; border-radius: 3px; margin-top: 12px; }
+  .track span { height: 100%; opacity: .55; } .track span:first-child { border-radius: 3px 0 0 3px; } .track span:nth-child(3) { border-radius: 0 3px 3px 0; }
+  .z-ok { background: var(--ok); } .z-mid { background: var(--c3); } .z-bad { background: var(--bad); }
+  .mark { position: absolute; top: -4px; width: 4px; height: 14px; margin-left: -2px; border-radius: 2px; background: var(--fg); box-shadow: 0 0 0 2px var(--panel); }
+  .ls { display: grid; gap: 16px; }
+  .ls-h { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 13px; margin-bottom: 5px; }
+  .ls-h span { color: var(--mut); }
+  .ls-bar { display: flex; height: 34px; border-radius: 8px; overflow: hidden; font-weight: 650; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .ls-bar div { display: flex; align-items: center; padding: 0 12px; white-space: nowrap; color: #fff; min-width: 0; }
+  .ls-long { background: color-mix(in srgb, var(--ok) 78%, #000); } .ls-short { background: color-mix(in srgb, var(--bad) 78%, #000); justify-content: flex-end; }
+  .mc { display: flex; flex-wrap: wrap; gap: 10px; }   /* Flex statt Grid: letzte Reihe füllt sich, keine leeren Felder */
+  .mc > div { flex: 1 1 150px; min-width: 0; border: 1px solid var(--line); border-left: 3px solid var(--c2); border-radius: 8px; padding: 10px 12px; }
+  .mc .t-v { font-size: 22px; } .mc .chg { font-size: 13px; }
+  .live { font-size: 12px; font-weight: 600; color: var(--ok); margin-left: 8px; } .live.off { color: var(--mut); }
+  .etf-big { font-size: 32px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; line-height: 1.2; }
+  .etf-tab { margin: 14px 0 12px; font-size: 13px; } .etf-tab td, .etf-tab th { padding: 7px 8px 7px 0; white-space: nowrap; } .etf-tab th:last-child, .etf-tab td:last-child { padding-right: 0; }
+  .etf-net { font-weight: 700; } .etf-tab tr:last-child td { border-bottom: 0; }
+  .etf-bar { height: 26px; font-size: 12px; margin: 4px 0 10px; }
+  .liq-chart { height: 420px; min-height: 420px; border-radius: 8px; overflow: hidden; }
+  .liq-chart canvas, .liq-chart svg { position: absolute; left: 0; top: 0; }
+  .hm-scale { display: inline-block; width: 120px; height: 9px; border-radius: 5px; background: linear-gradient(90deg, #440154, #3b528b, #21918c, #5ec962, #fde725); }
+  .tv-box { height: 760px !important; margin-top: 12px; border-radius: 8px; overflow: hidden; }
+  @media (max-width: 700px) { .tv-box { height: 560px !important; } }   /* TradingView setzt sonst height:100% inline */
+  .tv-box[hidden] { display: none !important; }
+  .kc-box { display: flex; flex-direction: column; gap: 8px; }
+  .kc-chart { flex: 1; min-height: 0; position: relative; }
+  .kc-chart > canvas.kc-vp { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none; }   /* Volumenprofil liegt über dem Chart, fängt keine Klicks */
+  button:disabled { opacity: .45; cursor: default; }
+  .kc-ctl { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .kc-ctl button { padding: 4px 10px; font-size: 13px; }
+  @media (max-width: 700px) { .kc-ctl button, .kc-ctl select { min-height: 38px; } }   /* gut treffbar mit dem Finger */
+  button[aria-pressed="true"] { border-color: var(--c0); color: var(--c0); }
+  .hm-ctl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .hm-link { font-size: 13px; font-weight: 600; color: var(--c0); text-decoration: none; border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px; white-space: nowrap; }
+  .hm-link:hover { border-color: var(--c0); }
+  #meine { flex-direction: row-reverse; flex-wrap: wrap-reverse; }   /* gestreckte Restreihe oben: größte Coins bekommen die größeren Kästchen */
+  .coin { background: linear-gradient(160deg, color-mix(in srgb, var(--c2) 12%, var(--panel)), var(--panel) 60%); }
+  .coin .chg { font-size: 13px; display: inline-block; margin-top: 2px; } .coin .t-r { margin-top: 4px; }
+  tbody tr:hover { background: color-mix(in srgb, var(--c0) 6%, transparent); }
+  @media (prefers-reduced-motion: no-preference) {
+    .card { transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
+    .tiles .card:hover, .charts .card:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--c0) 55%, var(--line)); box-shadow: 0 10px 28px rgba(0,0,0,.22); }
+    .dot:not(.err) { animation: puls 2s ease-out infinite; }
+    @keyframes puls { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ok) 60%, transparent); } 100% { box-shadow: 0 0 0 9px transparent; } }
+  }
+  .sub { margin: 0 0 10px; color: var(--mut); font-size: 13px; max-width: 85ch; }
+  .lead { margin: 0; max-width: 75ch; }
+  .status { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; font-size: 13px; color: var(--mut); margin-top: 10px; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--ok); margin-right: 6px; }
+  .dot.err { background: var(--bad); } .dot.busy { background: var(--c1); }
+  button, select { font: inherit; color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 5px 12px; cursor: pointer; }
+  .ampel { display: flex; height: 14px; border-radius: 7px; overflow: hidden; margin-top: 12px; max-width: 520px; background: var(--line); }
+  .ampel span { height: 100%; } .a-ok { background: var(--ok); } .a-mid { background: var(--c3); } .a-bad { background: var(--bad); }
+  .tiles { display: flex; flex-wrap: wrap; gap: 12px; } .tiles > .card { flex: 1 1 160px; }   /* letzte Reihe füllt sich */
+  @media (min-width: 900px) { .tiles > .card { flex-basis: 185px; } }   /* 6 je Reihe bei voller Breite */
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
+  .t-l { font-size: 13px; color: var(--mut); } .t-v { font-size: 26px; font-variant-numeric: tabular-nums; margin: 2px 0; }
+  .t-r { font-size: 12px; color: var(--mut); }
+  .chip { display: inline-block; font-size: 12px; font-weight: 600; padding: 0 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--mut); white-space: nowrap; }
+  .chip[data-s="bullisch"] { color: var(--ok); border-color: var(--ok); } .chip[data-s="bärisch"] { color: var(--bad); border-color: var(--bad); }
+  .bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+  .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 12px; }
+  .charts { grid-auto-flow: row dense; container-type: inline-size; }
+  .wide { grid-column: 1 / -1; }
+  .etf-gross, .links1 { display: flex; flex-direction: column; } .etf-gross .chart, .links1 .chart { flex: 1; } .etf-gross .chart svg, .links1 .chart svg { position: absolute; left: 0; top: 0; }   /* SVG bestimmt die Kartenhöhe nicht mit, sonst schaukelt sich das Raster auf */   /* Chart füllt die gestreckte Karte */
+  @container (min-width: 772px) {   /* ab 2 Spalten: ETH/BTC + Hashrate links untereinander, ETF rechts über den Rest, 2 Reihen hoch */
+    .links1 { grid-column: 1; } .etf-gross { grid-column: 2 / -1; grid-row: span 2; } }
+  .kopf2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 12px 28px; align-items: start; }
+  .kopf2 .mc > div { flex-basis: 100%; }   /* Kästen rechts untereinander: Spalte so hoch wie das Fazit links */
+  .chart { position: relative; min-height: 236px; color: var(--mut); font-size: 13px; }
+  .chart svg { display: block; overflow: visible; touch-action: pan-y; }
+  .ax text, .ref { fill: var(--mut); font-size: 11px; font-family: inherit; font-variant-numeric: tabular-nums; }
+  .ax line, .ax path { stroke: var(--line); }
+  .hm-ax text { fill: #e6edf3; } .hm-ax line, .hm-ax path { stroke: rgba(255,255,255,.35); }
+  .tip { position: absolute; pointer-events: none; background: var(--panel); border: 1px solid var(--line); box-shadow: 0 4px 14px rgba(0,0,0,.35); border-radius: 8px; padding: 6px 9px; font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--fg); z-index: 2; }
+  .tip-d { color: var(--mut); }
+  .leg { display: flex; flex-wrap: wrap; gap: 3px 14px; font-size: 12px; color: var(--mut); margin-bottom: 6px; }
+  .sw { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th { text-align: left; color: var(--mut); font-weight: 600; padding: 6px 10px 6px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  td { padding: 7px 10px 7px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .num { font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; } th.num { text-align: right; }
+  .up { color: var(--ok); } .down { color: var(--bad); } .grp { color: var(--mut); white-space: nowrap; }
+  .notes { font-size: 13px; color: var(--mut); } .notes summary { cursor: pointer; color: var(--fg); }
+</style>
+</head>
+<body>
+<div class="bk">
+  <header class="hero card">
+    <div>
+      <div class="eyebrow"><span><i class="dot busy" id="dot"></i><span id="stand">Lade …</span></span><span id="next"></span></div>
+      <h1>Bitcoin-Indikatoren und Crypto-Coins</h1>
+      <div class="kurs-label"><span class="btc-badge" aria-hidden="true">₿</span>Bitcoin-Kurs<span class="live-pill">live</span></div>
+      <div class="price"><span id="preis">—</span> <span class="eur" id="preisEur"></span> <span class="chg" id="chg"></span></div>
+      <p class="lead" id="lead">Daten werden geladen …</p>
+      <noscript><p class="lead" style="color:#f5a623">Diese Vorschau kann keine Live-Daten zeigen. Hier läuft das Dashboard live, auch auf dem Handy: <a href="https://bitcoin-dashboard-live.netlify.app" style="color:#2EC4FF">bitcoin-dashboard-live.netlify.app</a></p></noscript>
+      <div class="ampel" id="ampel" role="img" aria-label="Verteilung der Signale: bullisch, neutral, bärisch"></div>
+      <div class="ampel-leg" id="ampelLeg"></div>
+      <div class="status"><button id="jetzt" type="button">↻ Jetzt aktualisieren</button><span id="fehler"></span></div>
+    </div>
+    <div class="gauge"><div class="g-t">Fear &amp; Greed Index</div><div id="gauge"></div></div>
+  </header>
+
+  <section class="tiles" id="tiles"></section>
+
+  <section class="card">
+    <h2>Meine Coins <span class="live" id="wsState">verbinde …</span></h2>
+    <p class="sub">Kurs in US-Dollar und Veränderung in 24 Stunden, laufend aktualisiert (Binance). Kaspa führt Binance nicht, der Kurs kommt alle 15 Sekunden von der Börse Gate.io.</p>
+    <div id="meine" class="mc"></div>
+  </section>
+
+  <section class="card">
+    <h2>Long gegen Short</h2>
+    <p class="sub">Grober Überblick: So viel Prozent der Händler mit Bitcoin-Futures sind gerade long und so viel short (Durchschnitt aus Binance und Bybit, den zwei größten Börsen; ist Binance gesperrt, ersatzweise Gate.io – die Quelle steht am Balken). Achtung: Sind sehr viele Kleinanleger long, wird das oft als Warnsignal gelesen.</p>
+    <div id="longshort" class="ls"></div>
+  </section>
+
+  <section class="card" id="liq-card">
+    <div class="bar">
+      <h2>Liquidation Heatmap</h2>
+      <div class="hm-ctl">
+        <select id="hmZeit" aria-label="Zeitraum der Heatmap">
+          <option value="5m">1,5 Tage (5-Min.-Schritte)</option>
+          <option value="15m" selected>5 Tage (15-Min.-Schritte)</option>
+          <option value="1h">3 Wochen (1-Std.-Schritte)</option>
+          <option value="4h">1 Monat (4-Std.-Schritte)</option>
+          <option value="3M">3 Monate (4-Std.-Schritte)</option>
+          <option value="6M">6 Monate (Tages-Schritte)</option>
+          <option value="1J">1 Jahr (Tages-Schritte)</option>
+        </select>
+      <a class="hm-link" href="https://coinank.com/chart/derivatives/liq-heat-map" target="_blank" rel="noopener">Original bei CoinAnk öffnen ↗</a>
+      </div>
+    </div>
+    <p class="sub">Wo gehebelte Bitcoin-Futures zwangsweise geschlossen würden, über den oben gewählten Zeitraum. <b>Helle, gelbe Zonen</b> = dort stauen sich viele Liquidationen. Solche Zonen ziehen den Kurs oft an wie Magnete, weil Zwangskäufe und -verkäufe die Bewegung beschleunigen. Läuft der Kurs (weiße Linie) durch eine Zone, wird sie „abgeräumt“ und verschwindet.</p>
+    <div id="liqHead" class="mc"></div>
+    <div class="leg" style="margin-top:12px;align-items:center"><span>wenig</span><i class="hm-scale"></i><span>viel Liquidationen</span><span><i class="sw" style="background:#fff"></i>Kurs</span></div>
+    <div class="chart liq-chart" id="liqChart">—</div>
+    <p class="t-r" style="margin-top:8px">Eigene Schätzung nach dem Prinzip von CoinAnk: Aus den neu eröffneten Futures-Positionen (Binance BTCUSDT, je nach Zeitraum in 5-Minuten- bis Tages-Schritten; ab 3 Monaten Positionsdaten von Bybit, auf Binance-Größe umgerechnet, weil Binance sie nur 30 Tage rückwirkend liefert) und dem Long/Short-Verhältnis der Top-Händler werden Liquidationspreise für 10-, 25-, 50- und 100-fachen Hebel berechnet und über die Zeit aufgetragen. CoinAnk selbst erlaubt kein Einbetten und verlangt für seine Daten ein Bezahl-Abo; der Link oben öffnet das Original. Echte Positionsdaten veröffentlicht keine Börse, die Karte zeigt daher Größenordnungen.</p>
+  </section>
+
+  <section>
+    <div class="bar">
+      <h2>Verlauf der Indikatoren</h2>
+      <select id="zeitraum" aria-label="Zeitraum der Charts">
+        <option value="90">3 Monate</option><option value="180">6 Monate</option>
+        <option value="365" selected>1 Jahr</option><option value="730">2 Jahre</option>
+      </select>
+    </div>
+    <p class="sub">Mit der Maus oder dem Finger über einen Chart fahren, um die Werte eines Tages zu lesen. Der letzte Punkt ist der heutige Live-Kurs.</p>
+    <div class="charts" id="charts"></div>
+  </section>
+
+  <section class="card">
+    <h2>Die größten Kryptowährungen</h2>
+    <p class="sub">Nach Marktkapitalisierung, ohne Stablecoins und verpackte Coins.</p>
+    <div class="scroll"><table><thead><tr><th>Coin</th><th class="num">Kurs</th><th class="num">24 Std.</th><th class="num">7 Tage</th><th class="num">30 Tage</th><th class="num">Marktkap.</th></tr></thead><tbody id="coins"></tbody></table></div>
+  </section>
+
+  <details class="notes">
+    <summary>Quellen, Berechnung und was fehlt</summary>
+    <ul>
+      <li>Diese Datei aktualisiert sich von selbst, solange sie im Browser geöffnet ist und Internet da ist.</li>
+      <li>Sekündlich: Bitcoin-Kurs oben und „Meine Coins“. Alle 15 Sekunden: 24-Stunden-Verlauf, alle Kurs-Indikatoren, Open Interest, Long/Short (Stand der letzten 5 Minuten). Alle 5 Minuten: Funding Rate, Dominanz, Coin-Liste, ETH/BTC. ETF-Flüsse: einmal täglich, die freie Quelle (BGeometrics) hängt einige Tage nach.</li>
+      <li>Nur einmal am Tag neu, weil die Quelle sie nur täglich liefert: MVRV, NUPL, realisierter Preis, Puell, Hashrate, Börsenflüsse (Coin Metrics) und der Fear &amp; Greed Index (alternative.me).</li>
+      <li>Stablecoins: Summe aller an den US-Dollar gekoppelten Stablecoins und ihr Wachstum in 30 Tagen (DefiLlama), stündlich.</li>
+      <li>Coinbase-Premium: Bitcoin-Kurs bei Coinbase (US-Dollar) gegen den Börsen-Kurs in USDT (Binance bzw. OKX), jede Minute. USD und USDT weichen leicht voneinander ab.</li>
+      <li>DVOL: implizite Volatilität aus Bitcoin-Optionen der Börse Deribit, alle 30 Minuten; eingeordnet gegen die Tageswerte des letzten Jahres.</li>
+      <li>Börsenflüsse: Bitcoin, die netto auf Börsen (Zufluss) oder von Börsen (Abfluss) wandern, und der Börsenbestand (Coin Metrics Community, vorläufige Tageswerte), stündlich.</li>
+      <li>Quellen: Coin Metrics (Community), Binance (ersatzweise OKX und Gate.io), alternative.me, CoinGecko. Durchschnitte, RSI, MACD, Bollinger-Band, MVRV-Z-Score, Mayer, Puell und Pi-Cycle sind daraus selbst berechnet.</li>
+      <li>Bitcoin im Vergleich zu allem Gold: Marktwert von Bitcoin in Prozent des Marktwerts allen Goldes (wie bei Newhedge). Gold-Kurs über PAXG (Binance/OKX), Goldbestand weltweit rund 216.000 t als feste Annahme, Bitcoin-Menge aus Coin Metrics.</li>
+      <li>Bitcoin oder Gold (Kapital-Rotation): vergleicht die Netto-Geldflüsse der US-Bitcoin-ETFs mit denen des größten Gold-ETFs GLD (Änderung des Goldbestands × Goldpreis, SPDR-Tagesarchiv), dazu den Trend von 1 BTC in Unzen Gold zum 200-Tage-Durchschnitt und den Rendite-Vorsprung über 90 Tage.</li>
+      <li>Liquidation Heatmap: eigene Schätzung im Stil von CoinAnk aus Binance-Futures-Daten (Open Interest, Kurs, Long/Short der Top-Händler), jede Minute neu.</li>
+      <li>TradingView-Chart: offizielles, kostenloses Einbett-Widget von TradingView (Kurse von Binance).</li>
+      <li>Eigener Live-Chart (Ersatz, wenn TradingView im Netz gesperrt ist): gezeichnet mit TradingView Lightweight Charts (Apache-2.0), Kerzen von Binance bzw. OKX.</li>
+      <li>Nicht enthalten, weil kostenpflichtig: SOPR.</li>
+      <li>Die Schwellen sind Faustregeln aus früheren Zyklen und keine Anlageberatung.</li>
+    </ul>
+  </details>
+
+  <section class="card" id="tv-card">
+    <h2>TradingView-Chart</h2>
+    <p class="sub">Kerzenchart, live. Oben den Zeitrahmen umschalten (1 Minute bis 1 Woche, z. B. <b>4h</b> oder <b>1D</b>) und den Coin wählen. Unten im Chart steht das Handelsvolumen. Ist TradingView in deinem Netz gesperrt, springt automatisch der eigene Live-Chart ein.</p>
+    <div class="kc-ctl" role="group" aria-label="Chart-Quelle"><button type="button" id="btnTv" aria-pressed="true">TradingView</button><button type="button" id="btnKc" aria-pressed="false">Eigener Live-Chart</button></div>
+    <p class="sub" id="kcHinweis" role="status" style="color:var(--c1);margin-top:10px" hidden>TradingView ist in deinem Netz gerade nicht erreichbar – eigener Live-Chart wird gezeigt.</p>
+    <div class="tv-box kc-box" id="kc-box" hidden>
+      <div class="kc-ctl"><select id="kcCoin" aria-label="Coin des Live-Charts"></select><span class="kc-ctl" id="kcTf" role="group" aria-label="Zeitrahmen"></span>
+        <button type="button" id="kcVp" aria-pressed="true">Volumenprofil</button><button type="button" id="kcTp" aria-pressed="true">Tages-POC</button>
+        <span><b id="kcName"></b> <span id="kcPx" class="num"></span> <span id="kcChg" class="chg"></span></span></div>
+      <p class="sub" id="kcMsg" role="status" hidden></p>
+      <div class="kc-chart" id="kcChart"></div>
+    </div>
+    <p class="sub" id="kcInfo" style="margin-top:10px" hidden><b>Volumenprofil</b> (Balken rechts): Wo im sichtbaren Ausschnitt viel gehandelt wurde, sind die Balken dick – solche Zonen wirken oft als Unterstützung (unter dem Kurs) oder Widerstand (darüber); durch Lücken läuft der Kurs meist schnell durch. Orange Linie = <b>POC</b>, der meistgehandelte Preis; blau = Bereich mit 70 % des Volumens. <b>Tages-POC</b> (bis 1h): POC je Tag; rot gestrichelt = seither nicht mehr berührt („offen“) – solche Preise werden oft noch einmal angelaufen. Näherung aus Kerzendaten, keine Anlageberatung.</p>
+    <div class="tradingview-widget-container tv-box" id="tvBox">
+      <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+      <script src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+      {"autosize": true, "symbol": "BINANCE:BTCUSDT", "interval": "240", "timezone": "Europe/Berlin", "theme": "dark", "style": "1", "locale": "de_DE",
+       "backgroundColor": "#0d1117", "gridColor": "rgba(139,152,168,0.08)", "withdateranges": false, "hide_side_toolbar": true, "hide_top_toolbar": false, "allow_symbol_change": true,
+       "save_image": true, "details": false, "hotlist": false, "calendar": false, "studies": ["STD;MACD"], "support_host": "https://www.tradingview.com"}
+      </script>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+<script>
+const INTERVAL = 15 * 1000;   // Voll-Abruf alle 15 Sekunden; Kurse zusätzlich sekündlich per WebSocket
+const $ = (id) => document.getElementById(id);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const J = async (u, ms = 25000) => { const r = await fetch(u, {signal: AbortSignal.timeout(ms)}); if (!r.ok) throw new Error(r.status); return r.json(); };   // Zeitlimit, damit eine hängende Quelle die Seite nicht blockiert
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const num = (v) => v == null || v === '' ? NaN : +v;
+const de = (x, n = 0) => !Number.isFinite(+x) ? '–' : (+x).toLocaleString('de-DE', {minimumFractionDigits: n, maximumFractionDigits: n});
+const pct = (x, n = 1) => (x > 0 ? '+' : '') + de(x, n) + ' %';
+const usd = (x, n = 0) => de(x, n) + ' $';
+const day = (ms) => new Date(ms).toISOString().slice(0, 10);
+
+// ---------- Quellen (ttl = so lange gilt der letzte Abruf; ohne ttl jedes Mal neu)
+const FAPI = 'https://fapi.binance.com/';
+// Ersatz, wenn Binance im Netz gesperrt/gestört ist: dieselben Daten von OKX, ins Binance-Format umgebaut
+const OKX = 'https://www.okx.com/api/v5/market/';
+const BN = {};   // je Binance-Host (api/fapi): {aus = gesperrt bis, tmo = Zeitüberschreitungen in Folge}
+const bn = (u) => { const s = BN[new URL(u).host] ||= {aus: 0, tmo: 0};
+  if (s.aus > Date.now()) return Promise.reject(new Error('Binance gesperrt'));
+  return J(u, 8000).then((r) => { s.tmo = 0; return r; }, (e) => {   // nur echte Sperre zählt: Netzfehler, 403/451 oder 2× Zeitüberschreitung in Folge (nicht 429)
+    if (e instanceof TypeError || e.message === '403' || e.message === '451' || (e.name === 'TimeoutError' && ++s.tmo >= 2)) s.aus = Date.now() + 10 * 60000;
+    throw e; }); };
+const JB = (u, alt) => bn(u).catch(alt);
+async function okxKl(inst, bar, n) {   // OKX liefert neueste zuerst, je Abruf höchstens 300 (history-candles: 100) – ältere nachblättern
+  let k = (await J(`${OKX}candles?instId=${inst}&bar=${bar}&limit=${Math.min(n, 300)}`)).data;
+  if (!k.length) throw new Error('OKX: keine Kerzen');   // leer: alten Stand behalten
+  while (k.length && k.length < n) { const d = (await J(`${OKX}history-candles?instId=${inst}&bar=${bar}&limit=100&after=${k[k.length - 1][0]}`)).data;
+    if (!d.length) break; k = k.concat(d); }
+  return k.slice(0, n).reverse().map((c) => [+c[0], c[1], c[2], c[3], c[4], c[5]]);   // c[5] = Volumen
+}
+// Futures-Ersatz (fapi gesperrt): Funding von OKX, OI und Long/Short von Gate.io (OKX-Statistik-API sendet keine CORS-Header,
+// der Browser blockt sie). .quelle am Datensatz, damit Beschriftungen stimmen
+const QU = (v, q) => Object.assign(v, {quelle: q}), quelle = (k) => S[k] ? S[k].v.quelle || 'Binance' : '';   // '' = noch unbekannt
+async function okxFunding() {   // neueste zuerst, je 100 – nachblättern (OKX reicht nur rund 3 Monate zurück)
+  let f = [], a = '';
+  while (f.length < 1000) { const d = (await J('https://www.okx.com/api/v5/public/funding-rate-history?instId=BTC-USDT-SWAP&limit=100' + a)).data;
+    if (!d.length) break; f = f.concat(d); a = '&after=' + d[d.length - 1].fundingTime; }
+  return QU(f.reverse().map((x) => ({fundingTime: +x.fundingTime, fundingRate: +x.fundingRate})), 'OKX');
+}
+// Gate.io BTC_USDT-Perpetual, älteste zuerst; BTC-Menge = USD-Wert ÷ Mark-Preis, Long-Anteil aus dem Konten-Verhältnis r
+const gateStats = (iv, n) => J(`https://api.gateio.ws/api/v4/futures/usdt/contract_stats?contract=BTC_USDT&interval=${iv}&limit=${n}`)
+  .then((d) => { if (!d.length) throw new Error('Gate.io: keine Daten'); return d; }).then((d) => QU(d.map((x) => ({timestamp: x.time * 1000, sumOpenInterestValue: x.open_interest_usd, sumOpenInterest: x.open_interest_usd / x.mark_price,
+    longShortRatio: x.lsr_account, longAccount: x.lsr_account / (1 + x.lsr_account), shortAccount: 1 / (1 + x.lsr_account)})), 'Gate.io'));
+const SOURCES = {
+  cm: {name: 'Coin Metrics', ttl: 30 * 60 * 1000, get: async () => {
+    let url = 'https://community-api.coinmetrics.io/v4/timeseries/asset-metrics?assets=btc&metrics=PriceUSD,CapMVRVCur,CapMrktCurUSD,HashRate,IssTotUSD&frequency=1d&page_size=10000', rows = [];
+    while (url) { const j = await J(url); rows = rows.concat(j.data); url = j.next_page_url; }
+    return rows; }},
+  eur: {name: 'Binance Euro-Kurs', get: () => JB('https://api.binance.com/api/v3/ticker/price?symbol=BTCEUR', () => J(OKX + 'ticker?instId=BTC-EUR').then((j) => ({price: j.data[0].last})))},
+  btc: {name: 'Binance Kurs', get: () => JB('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=7', () => okxKl('BTC-USDT', '1Dutc', 7))},
+  intra: {name: 'Binance 24-Stunden-Verlauf', get: () => JB('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=5m&limit=288', () => okxKl('BTC-USDT', '5m', 288))},
+  eth: {name: 'Binance ETH/BTC', ttl: 5 * 60 * 1000, get: () => JB('https://api.binance.com/api/v3/klines?symbol=ETHBTC&interval=1d&limit=1000', () => okxKl('ETH-BTC', '1Dutc', 1000))},
+  fng: {name: 'Fear & Greed', ttl: 30 * 60 * 1000, get: () => J('https://api.alternative.me/fng/?limit=900')},
+  funding: {name: 'Funding (Binance/OKX)', ttl: 5 * 60 * 1000, get: () => JB(FAPI + 'fapi/v1/fundingRate?symbol=BTCUSDT&limit=1000', okxFunding)},
+  oi: {name: 'Open Interest (Binance/Gate.io)', get: () => JB(FAPI + 'futures/data/openInterestHist?symbol=BTCUSDT&period=4h&limit=180', () => gateStats('4h', 180))},
+  ls: {name: 'Long/Short (Binance/Gate.io)', get: () => JB(FAPI + 'futures/data/globalLongShortAccountRatio?symbol=BTCUSDT&period=1d&limit=30', () => gateStats('1d', 30))},
+  lsNow: {name: 'Long/Short aktuell (Binance/Gate.io)', get: () => JB(FAPI + 'futures/data/globalLongShortAccountRatio?symbol=BTCUSDT&period=5m&limit=1', () => gateStats('5m', 1))},
+  lsBybit: {name: 'Bybit Long/Short', get: () => J('https://api.bybit.com/v5/market/account-ratio?category=linear&symbol=BTCUSDT&period=5min&limit=1')},
+  meine: {name: 'Binance Coin-Kurse', get: () => JB('https://api.binance.com/api/v3/ticker/24hr?symbols=' + encodeURIComponent(JSON.stringify(MEINE.map((c) => c[0] + 'USDT'))),
+    () => J(OKX + 'tickers?instType=SPOT').then((j) => QU(j.data.filter((r) => r.instId.endsWith('-USDT')).map((r) => ({symbol: r.instId.replace('-', ''), lastPrice: r.last, priceChangePercent: (r.last / r.open24h - 1) * 100})), 'OKX')))},
+  cg: {name: 'Gate.io Zusatz-Coins', get: () => Promise.all(ALLE.filter((c) => c[2]).map((c) => J('https://api.gateio.ws/api/v4/spot/tickers?currency_pair=' + c[2]).then((r) => r[0])))},
+  etf: {name: 'ETF-Flüsse (BGeometrics)', ttl: 6 * 3600 * 1000, get: async () => {
+    let c = null; try { c = JSON.parse(localStorage.getItem('etf_v2')); } catch (e) {}
+    if (c && Date.now() - c.at < 6 * 3600 * 1000) return c.v;
+    try {
+      const [flow, total] = await Promise.all([J('https://bitcoin-data.com/v1/etf-flow-btc', 8000), J('https://bitcoin-data.com/v1/etf-btc-total/last', 8000)]);
+      if (!Array.isArray(flow) || flow.length < 30) throw new Error('ETF-Daten nicht lesbar');
+      const v = {flow, total};
+      try { localStorage.setItem('etf_v2', JSON.stringify({at: Date.now(), v})); } catch (e) {}
+      return v;
+    } catch (e) {   // Quelle nicht erreichbar (nur 10 Abrufe pro Stunde): letzten bekannten Stand zeigen und in einer Stunde neu versuchen
+      const alt = neuer(c && c.v, ETF_ALT || await J('etf_alt.json', 5000).catch(() => null), (v) => v.flow[v.flow.length - 1].d); if (!alt) throw e;
+      setTimeout(() => { delete S.etf; }, 3600 * 1000);
+      return {...alt, alt: true};
+    } }},
+  liq: {name: 'Liquidation Heatmap (Binance/Bybit)', ttl: 60 * 1000, get: () => { const key = HM_IV, [iv, n, lang] = HM[key];
+    const kl = bn(FAPI + `fapi/v1/klines?symbol=BTCUSDT&interval=${iv}&limit=${n}`);
+    if (!lang) return Promise.all([bn(FAPI + `futures/data/openInterestHist?symbol=BTCUSDT&period=${iv}&limit=${n}`), kl,
+      bn(FAPI + `futures/data/topLongShortPositionRatio?symbol=BTCUSDT&period=${iv}&limit=${n}`)]).then((v) => Object.assign(v, {iv, key}));
+    // Binance liefert Positionsdaten nur 30 Tage rückwirkend: längere Zeiträume mit Bybit-Verlauf, auf Binance-Größe hochgerechnet
+    return Promise.all([bybitAll(`open-interest?category=linear&symbol=BTCUSDT&intervalTime=${iv}`, n, 200), kl,
+      bybitAll(`account-ratio?category=linear&symbol=BTCUSDT&period=${iv}`, n, 500), bn(FAPI + `futures/data/openInterestHist?symbol=BTCUSDT&period=${iv}&limit=1`)])
+      .then(([oi, k, ls, bn]) => { const px = new Map(k.map((c) => [c[0], +c[4]])), last = oi[oi.length - 1];
+        const f = bn[0] && +bn[0].timestamp === +last.timestamp ? bn[0].sumOpenInterest / last.openInterest : 1;
+        return Object.assign([oi.filter((r) => px.has(+r.timestamp)).map((r) => ({timestamp: +r.timestamp, sumOpenInterest: r.openInterest * f, sumOpenInterestValue: r.openInterest * f * px.get(+r.timestamp)})),
+          k, ls.map((r) => ({timestamp: +r.timestamp, longAccount: +r.buyRatio}))], {iv, key}); }); }},
+  gld: {name: 'Gold-ETF GLD (SPDR)', ttl: 6 * 3600 * 1000, get: async () => {   // gespeichert wird nur die abgeleitete Reihe (SPDR untersagt Weitergabe der Rohdaten)
+    let c = null; try { c = JSON.parse(localStorage.getItem('gld_v1')); } catch (e) {}
+    if (c && Date.now() - c.at < 6 * 3600 * 1000) return {reihe: c.v};
+    try {
+      if (typeof DecompressionStream !== 'function') throw new Error('Browser kann XLSX nicht entpacken');   // ältere Browser: gleich Ausweichstand
+      const r = await fetch(GLD_URL, {signal: AbortSignal.timeout(30000)}); if (!r.ok) throw new Error(r.status);
+      const v = gldReihe(await xlsxRows(await r.arrayBuffer(), 'US GLD Historical Archive'));
+      try { localStorage.setItem('gld_v1', JSON.stringify({at: Date.now(), v: v.slice(-130)})); } catch (e) {}   // 130 Handelstage reichen für 90-Tage-Flüsse
+      return {reihe: v};
+    } catch (e) {   // Quelle nicht erreichbar: letzten bekannten Stand zeigen und in einer Stunde neu versuchen
+      const alt = neuer(c && c.v, GLD_ALT || await J('gld_alt.json', 5000).catch(() => null), (v) => v[v.length - 1].d); if (!alt) throw e;
+      setTimeout(() => { delete S.gld; }, 3600 * 1000);
+      return {reihe: alt, alt: true};
+    } }},
+  gold: {name: 'Binance Gold (PAXG)', ttl: 30 * 60 * 1000, get: () => JB('https://api.binance.com/api/v3/klines?symbol=PAXGUSDT&interval=1d&limit=1000', () => okxKl('PAXG-USDT', '1Dutc', 1000))},
+  glob: {name: 'CoinGecko Markt', keep: 1, ttl: 5 * 60 * 1000, get: () => J('https://api.coingecko.com/api/v3/global')},
+  stable: {name: 'Stablecoins (DefiLlama)', ttl: 3600 * 1000, get: () => J('https://stablecoins.llama.fi/stablecoincharts/all')
+    .then((a) => a.slice(-400).map((x) => ({t: x.date * 1000, usd: +x.totalCirculatingUSD.peggedUSD})))},   // [{t, usd}] – fremdes Format wirft hier, nicht in compute
+  cb: {name: 'Coinbase-Kurs', ttl: 60 * 1000, get: () => J('https://api.exchange.coinbase.com/products/BTC-USD/ticker')
+    .then((j) => ({px: +j.price, ref: live('BTC') ? live('BTC').px : NaN}))},   // Vergleichskurs im selben Moment festhalten
+  dvol: {name: 'DVOL (Deribit)', ttl: 30 * 60 * 1000, get: () => J(`https://www.deribit.com/api/v2/public/get_volatility_index_data?currency=BTC&start_timestamp=${Date.now() - 400 * 864e5}&end_timestamp=${Date.now()}&resolution=1D`)
+    .then((j) => j.result.data.map((r) => +r[4]))},   // Tages-Schlusswerte, älteste zuerst
+  boerse: {name: 'Börsenflüsse (Coin Metrics)', ttl: 3600 * 1000, get: () => J(`https://community-api.coinmetrics.io/v4/timeseries/asset-metrics?assets=btc&metrics=FlowInExNtv,FlowOutExNtv,SplyExNtv&frequency=1d&page_size=400&start_time=${day(Date.now() - 40 * 864e5)}`)
+    .then((j) => j.data.map((r) => ({d: r.time.slice(0, 10), netto: r.FlowInExNtv - r.FlowOutExNtv, bestand: +r.SplyExNtv})))},
+  coins: {name: 'CoinGecko Coins', keep: 1, ttl: 5 * 60 * 1000, get: async () => { await wait(1500); return J('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=30&page=1&price_change_percentage=24h,7d,30d'); }},
+};
+const ALLE = [['ETH', 'Ethereum'], ['XRP', 'XRP'], ['SOL', 'Solana'], ['TRX', 'Tron'], ['HYPE', 'Hyperliquid'], ['DOGE', 'Dogecoin'], ['LINK', 'Chainlink'], ['ADA', 'Cardano'], ['NEAR', 'NEAR'],
+  ['AVAX', 'Avalanche'], ['SUI', 'Sui'], ['HBAR', 'Hedera'], ['TAO', 'Bittensor'], ['PEPE', 'Pepe'], ['AAVE', 'Aave'], ['ONDO', 'Ondo'], ['PUMP', 'Pump.fun'], ['WLFI', 'World Liberty Financial'],
+  ['DOT', 'Polkadot'], ['JUP', 'Jupiter'], ['RENDER', 'Render'], ['KAS', 'Kaspa', 'KAS_USDT'], ['INJ', 'Injective'], ['AERO', 'Aerodrome'], ['VIRTUAL', 'Virtuals Protocol'], ['TRUMP', 'Trump-Coin']];
+  // Reihenfolge = Marktkapitalisierung (CoinGecko, Stand 12.11.2026), größte zuerst; dritter Eintrag = Gate.io-Handelspaar für Coins, die Binance nicht führt
+const MEINE = ALLE.filter((c) => !c[2]);   // diese kommen live von Binance   // Wunsch-Coins als Kacheln
+let HM_IV = '15m';   // Zeitraum der Heatmap (eigene Auswahl im Kasten)
+const HM = {'5m': ['5m', 500], '15m': ['15m', 500], '1h': ['1h', 500], '4h': ['4h', 180], '3M': ['4h', 540, 1], '6M': ['1d', 183, 1], '1J': ['1d', 365, 1]};   // Auswahl → [Schritt, Anzahl, Bybit-Verlauf]
+async function bybitAll(path, n, max) {   // Bybit blättert rückwärts: ältesten Zeitstempel als nächstes Ende nehmen
+  let out = [], end = Date.now();
+  while (out.length < n) { const l = (await J(`https://api.bybit.com/v5/market/${path}&limit=${max}&endTime=${end}`)).result.list;
+    if (!l.length) break; out.push(...l); end = +l[l.length - 1].timestamp - 1; }
+  return out.slice(0, n).reverse();
+}
+// XLSX ohne Bibliothek lesen: ZIP-Inhaltsverzeichnis, Einträge per DecompressionStream entpacken, Zellen per Regex
+async function xlsxRows(buf, blatt) {
+  const v = new DataView(buf), u8 = new Uint8Array(buf), td = new TextDecoder(), files = {};
+  let e = buf.byteLength - 22; while (e >= 0 && v.getUint32(e, true) !== 0x06054b50) e--;
+  if (e < 0) throw new Error('XLSX nicht lesbar');
+  for (let p = v.getUint32(e + 16, true), n = v.getUint16(e + 10, true); n--;) {
+    const nl = v.getUint16(p + 28, true);
+    files[td.decode(u8.subarray(p + 46, p + 46 + nl))] = {m: v.getUint16(p + 10, true), size: v.getUint32(p + 20, true), off: v.getUint32(p + 42, true)};
+    p += 46 + nl + v.getUint16(p + 30, true) + v.getUint16(p + 32, true); }
+  const read = async (name) => { const f = files[name]; if (!f) throw new Error(name + ' fehlt in XLSX');
+    const s = f.off + 30 + v.getUint16(f.off + 26, true) + v.getUint16(f.off + 28, true), raw = u8.subarray(s, s + f.size);
+    return f.m ? new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text() : td.decode(raw); };
+  const tag = (xml, re, attr) => { const t = (xml.match(re) || [])[0]; if (!t) throw new Error('XLSX-Aufbau unbekannt'); return t.match(new RegExp(attr + '="([^"]*)"'))[1]; };
+  const id = tag(await read('xl/workbook.xml'), new RegExp(`<sheet\\b[^>]*name="${blatt}"[^>]*>`), 'r:id');
+  const ziel = tag(await read('xl/_rels/workbook.xml.rels'), new RegExp(`<Relationship\\b[^>]*Id="${id}"[^>]*>`), 'Target');
+  const txt = (x) => x.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'");
+  const ss = files['xl/sharedStrings.xml'] ? [...(await read('xl/sharedStrings.xml')).matchAll(/<si\b[^>]*>([\s\S]*?)<\/si>/g)].map((m) => txt(m[1])) : [];
+  const sheet = await read(ziel.startsWith('/') ? ziel.slice(1) : 'xl/' + ziel);
+  return [...sheet.matchAll(/<row\b[^>]*>([\s\S]*?)<\/row>/g)].map((m) => { const z = {};
+    for (const [, col, at, inner] of m[1].matchAll(/<c r="([A-Z]+)\d+"([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g)) {
+      const w = inner && (inner.match(/<v>([^<]*)<\/v>/) || inner.match(/<t[^>]*>([^<]*)<\/t>/));
+      if (w) z[col] = /t="s"/.test(at) ? ss[+w[1]] : txt(w[1]); }
+    return z; });
+}
+const GLD_URL = 'https://api.spdrgoldshares.com/api/v1/historical-archive?product=gld&exchange=NYSE&lang=en';
+const MON = 'JanFebMarAprMayJunJulAugSepOctNovDec';
+function gldReihe(rows) {   // → [{d, oz, px}] mit Gold im Trust (Unzen) und Goldpreis je Unze (Nettovermögen ÷ Unzen)
+  const kopf = rows.findIndex((z) => z.A === 'Date'), h = kopf >= 0 ? Object.fromEntries(Object.entries(rows[kopf]).map(([k, t]) => [t, k])) : {};
+  const cOz = h['Total Ounces of Gold in the Trust'], cNav = h['Total Net Asset Value in the Trust'], out = [];
+  if (!cOz || !cNav) throw new Error('GLD-Spalten nicht gefunden');
+  for (const z of rows.slice(kopf + 1)) { const oz = +z[cOz], nav = +z[cNav], a = String(z[h.Date] || '');
+    if (!(oz > 0 && nav > 0)) continue;   // Feiertage („US Holiday“) und Leerzeilen
+    const m = /^(\d{1,2})-([A-Za-z]{3})-(\d{4})$/.exec(a), mo = m ? MON.indexOf(m[2]) / 3 + 1 : 0;
+    const d = mo >= 1 ? `${m[3]}-${String(mo).padStart(2, '0')}-${m[1].padStart(2, '0')}` : /^\d+(\.\d+)?$/.test(a) ? day(Date.UTC(1899, 11, 30) + Math.floor(+a) * 864e5) : '';   // Text oder Excel-Seriennummer
+    if (d && (!out.length || d > out[out.length - 1].d)) out.push({d, oz, px: nav / oz}); }
+  if (out.length < 100) throw new Error('GLD-Daten nicht lesbar');
+  return out.slice(-800);
+}
+const GOLD_OZ = 6.95e9;   // Goldbestand weltweit ≈ 216.000 t (World Gold Council, Ende 2024) in Feinunzen
+const ETF_ALT = /*ETF_ALT*/{"flow": [{"d": "2024-01-11", "unixTs": "1704931200", "etfFlow": "14128.66961270"}, {"d": "2024-01-12", "unixTs": "1705017600", "etfFlow": "4741.05983149"}, {"d": "2024-01-16", "unixTs": "1705363200", "etfFlow": "-1220.71423101"}, {"d": "2024-01-17", "unixTs": "1705449600", "etfFlow": "10630.29738130"}, {"d": "2024-01-18", "unixTs": "1705536000", "etfFlow": "-3068.20521176"}, {"d": "2024-01-19", "unixTs": "1705622400", "etfFlow": "1047.90428253"}, {"d": "2024-01-22", "unixTs": "1705881600", "etfFlow": "-2208.34776445"}, {"d": "2024-01-23", "unixTs": "1705968000", "etfFlow": "-2670.03449287"}, {"d": "2024-01-24", "unixTs": "1706054400", "etfFlow": "-3947.44812946"}, {"d": "2024-01-25", "unixTs": "1706140800", "etfFlow": "-1999.11512120"}, {"d": "2024-01-26", "unixTs": "1706227200", "etfFlow": "353.55330952"}, {"d": "2024-01-29", "unixTs": "1706486400", "etfFlow": "5914.15491931"}, {"d": "2024-01-30", "unixTs": "1706572800", "etfFlow": "5753.19414651"}, {"d": "2024-01-31", "unixTs": "1706659200", "etfFlow": "4641.99240467"}, {"d": "2024-02-01", "unixTs": "1706745600", "etfFlow": "894.92510776"}, {"d": "2024-02-02", "unixTs": "1706832000", "etfFlow": "1853.76632890"}, {"d": "2024-02-05", "unixTs": "1707091200", "etfFlow": "1597.86859726"}, {"d": "2024-02-06", "unixTs": "1707177600", "etfFlow": "779.53341943"}, {"d": "2024-02-07", "unixTs": "1707264000", "etfFlow": "3299.20900648"}, {"d": "2024-02-08", "unixTs": "1707350400", "etfFlow": "8934.06824953"}, {"d": "2024-02-09", "unixTs": "1707436800", "etfFlow": "11478.05889220"}, {"d": "2024-02-12", "unixTs": "1707696000", "etfFlow": "9870.01274895"}, {"d": "2024-02-13", "unixTs": "1707782400", "etfFlow": "12720.61744011"}, {"d": "2024-02-14", "unixTs": "1707868800", "etfFlow": "6552.31233510"}, {"d": "2024-02-15", "unixTs": "1707955200", "etfFlow": "9191.52556196"}, {"d": "2024-02-16", "unixTs": "1708041600", "etfFlow": "6361.52410366"}, {"d": "2024-02-20", "unixTs": "1708387200", "etfFlow": "2586.59980246"}, {"d": "2024-02-21", "unixTs": "1708473600", "etfFlow": "-687.99819490"}, {"d": "2024-02-22", "unixTs": "1708560000", "etfFlow": "4901.31805759"}, {"d": "2024-02-23", "unixTs": "1708646400", "etfFlow": "4577.74999658"}, {"d": "2024-02-26", "unixTs": "1708905600", "etfFlow": "9530.38676977"}, {"d": "2024-02-27", "unixTs": "1708992000", "etfFlow": "10112.20210935"}, {"d": "2024-02-28", "unixTs": "1709078400", "etfFlow": "10781.17219421"}, {"d": "2024-02-29", "unixTs": "1709164800", "etfFlow": "1503.38509587"}, {"d": "2024-03-01", "unixTs": "1709251200", "etfFlow": "-2232.72827797"}, {"d": "2024-03-04", "unixTs": "1709510400", "etfFlow": "8263.83909901"}, {"d": "2024-03-05", "unixTs": "1709596800", "etfFlow": "10137.52438769"}, {"d": "2024-03-06", "unixTs": "1709683200", "etfFlow": "5022.41011951"}, {"d": "2024-03-07", "unixTs": "1709769600", "etfFlow": "7044.83866051"}, {"d": "2024-03-08", "unixTs": "1709856000", "etfFlow": "3261.45571902"}, {"d": "2024-03-11", "unixTs": "1710115200", "etfFlow": "7000.18542403"}, {"d": "2024-03-12", "unixTs": "1710201600", "etfFlow": "14629.14863876"}, {"d": "2024-03-13", "unixTs": "1710288000", "etfFlow": "9355.29908230"}, {"d": "2024-03-14", "unixTs": "1710374400", "etfFlow": "1855.80719580"}, {"d": "2024-03-15", "unixTs": "1710460800", "etfFlow": "2863.52532605"}, {"d": "2024-03-18", "unixTs": "1710720000", "etfFlow": "-2276.78886780"}, {"d": "2024-03-19", "unixTs": "1710806400", "etfFlow": "-5263.89616008"}, {"d": "2024-03-20", "unixTs": "1710892800", "etfFlow": "-3854.19739912"}, {"d": "2024-03-21", "unixTs": "1710979200", "etfFlow": "-1434.57916318"}, {"d": "2024-03-22", "unixTs": "1711065600", "etfFlow": "-812.77141112"}, {"d": "2024-03-25", "unixTs": "1711324800", "etfFlow": "224.15115819"}, {"d": "2024-03-26", "unixTs": "1711411200", "etfFlow": "5965.37395424"}, {"d": "2024-03-27", "unixTs": "1711497600", "etfFlow": "3515.33743984"}, {"d": "2024-03-28", "unixTs": "1711584000", "etfFlow": "2580.94040647"}, {"d": "2024-04-01", "unixTs": "1711929600", "etfFlow": "-1227.94098356"}, {"d": "2024-04-02", "unixTs": "1712016000", "etfFlow": "602.74281703"}, {"d": "2024-04-03", "unixTs": "1712102400", "etfFlow": "1716.31073440"}, {"d": "2024-04-04", "unixTs": "1712188800", "etfFlow": "3118.14458304"}, {"d": "2024-04-05", "unixTs": "1712275200", "etfFlow": "2989.47456914"}, {"d": "2024-04-08", "unixTs": "1712534400", "etfFlow": "-3120.78190331"}, {"d": "2024-04-09", "unixTs": "1712620800", "etfFlow": "-280.85600681"}, {"d": "2024-04-10", "unixTs": "1712707200", "etfFlow": "1752.63490403"}, {"d": "2024-04-11", "unixTs": "1712793600", "etfFlow": "1303.41887359"}, {"d": "2024-04-12", "unixTs": "1712880000", "etfFlow": "-821.18552919"}, {"d": "2024-04-15", "unixTs": "1713139200", "etfFlow": "-578.92530331"}, {"d": "2024-04-16", "unixTs": "1713225600", "etfFlow": "-909.30725675"}, {"d": "2024-04-17", "unixTs": "1713312000", "etfFlow": "-2690.61725086"}, {"d": "2024-04-18", "unixTs": "1713398400", "etfFlow": "-67.70571851"}, {"d": "2024-04-19", "unixTs": "1713484800", "etfFlow": "936.28507851"}, {"d": "2024-04-22", "unixTs": "1713744000", "etfFlow": "929.12652599"}, {"d": "2024-04-23", "unixTs": "1713830400", "etfFlow": "476.00899387"}, {"d": "2024-04-24", "unixTs": "1713916800", "etfFlow": "-1878.79825981"}, {"d": "2024-04-25", "unixTs": "1714003200", "etfFlow": "-3372.83876800"}, {"d": "2024-04-26", "unixTs": "1714089600", "etfFlow": "-1310.80768857"}, {"d": "2024-04-29", "unixTs": "1714348800", "etfFlow": "-807.40573979"}, {"d": "2024-04-30", "unixTs": "1714435200", "etfFlow": "-2665.06911327"}, {"d": "2024-05-01", "unixTs": "1714521600", "etfFlow": "-9695.26606120"}, {"d": "2024-05-02", "unixTs": "1714608000", "etfFlow": "-581.37462721"}, {"d": "2024-05-03", "unixTs": "1714694400", "etfFlow": "6006.32016555"}, {"d": "2024-05-06", "unixTs": "1714953600", "etfFlow": "3432.01818881"}, {"d": "2024-05-07", "unixTs": "1715040000", "etfFlow": "-251.61466209"}, {"d": "2024-05-08", "unixTs": "1715126400", "etfFlow": "188.27990522"}, {"d": "2024-05-09", "unixTs": "1715212800", "etfFlow": "-179.36937757"}, {"d": "2024-05-10", "unixTs": "1715299200", "etfFlow": "-1390.88129286"}, {"d": "2024-05-13", "unixTs": "1715558400", "etfFlow": "1049.50249731"}, {"d": "2024-05-14", "unixTs": "1715644800", "etfFlow": "1632.67117647"}, {"d": "2024-05-15", "unixTs": "1715731200", "etfFlow": "4571.40910439"}, {"d": "2024-05-16", "unixTs": "1715817600", "etfFlow": "3942.13139110"}, {"d": "2024-05-17", "unixTs": "1715904000", "etfFlow": "3308.12087478"}, {"d": "2024-05-20", "unixTs": "1716163200", "etfFlow": "3331.35761775"}, {"d": "2024-05-21", "unixTs": "1716249600", "etfFlow": "4353.63076132"}, {"d": "2024-05-22", "unixTs": "1716336000", "etfFlow": "2229.46350247"}, {"d": "2024-05-23", "unixTs": "1716422400", "etfFlow": "1592.41471839"}, {"d": "2024-05-24", "unixTs": "1716508800", "etfFlow": "3671.53006626"}, {"d": "2024-05-28", "unixTs": "1716854400", "etfFlow": "658.44516958"}, {"d": "2024-05-29", "unixTs": "1716940800", "etfFlow": "418.73653190"}, {"d": "2024-05-30", "unixTs": "1717027200", "etfFlow": "713.70618292"}, {"d": "2024-05-31", "unixTs": "1717113600", "etfFlow": "724.27456935"}, {"d": "2024-06-03", "unixTs": "1717372800", "etfFlow": "1526.87718983"}, {"d": "2024-06-04", "unixTs": "1717459200", "etfFlow": "12566.24537463"}, {"d": "2024-06-05", "unixTs": "1717545600", "etfFlow": "6866.19151333"}, {"d": "2024-06-06", "unixTs": "1717632000", "etfFlow": "3075.35822584"}, {"d": "2024-06-07", "unixTs": "1717718400", "etfFlow": "1889.29162608"}, {"d": "2024-06-10", "unixTs": "1717977600", "etfFlow": "-934.27086002"}, {"d": "2024-06-11", "unixTs": "1718064000", "etfFlow": "-2974.69445655"}, {"d": "2024-06-12", "unixTs": "1718150400", "etfFlow": "1477.70610562"}, {"d": "2024-06-13", "unixTs": "1718236800", "etfFlow": "-3387.06466318"}, {"d": "2024-06-14", "unixTs": "1718323200", "etfFlow": "-2878.04951634"}, {"d": "2024-06-17", "unixTs": "1718582400", "etfFlow": "-2194.51697516"}, {"d": "2024-06-18", "unixTs": "1718668800", "etfFlow": "-2340.57795958"}, {"d": "2024-06-20", "unixTs": "1718841600", "etfFlow": "-2155.70039480"}, {"d": "2024-06-21", "unixTs": "1718928000", "etfFlow": "-1652.46573599"}, {"d": "2024-06-24", "unixTs": "1719187200", "etfFlow": "-2895.83512912"}, {"d": "2024-06-25", "unixTs": "1719273600", "etfFlow": "502.10832168"}, {"d": "2024-06-26", "unixTs": "1719360000", "etfFlow": "352.00566544"}, {"d": "2024-06-27", "unixTs": "1719446400", "etfFlow": "191.65201681"}, {"d": "2024-06-28", "unixTs": "1719532800", "etfFlow": "1210.54705399"}, {"d": "2024-07-01", "unixTs": "1719792000", "etfFlow": "2060.94017838"}, {"d": "2024-07-02", "unixTs": "1719878400", "etfFlow": "-220.86579798"}, {"d": "2024-07-03", "unixTs": "1719964800", "etfFlow": "-340.43886208"}, {"d": "2024-07-05", "unixTs": "1720137600", "etfFlow": "2522.87565377"}, {"d": "2024-07-08", "unixTs": "1720396800", "etfFlow": "5200.03602785"}, {"d": "2024-07-09", "unixTs": "1720483200", "etfFlow": "3732.22930470"}, {"d": "2024-07-10", "unixTs": "1720569600", "etfFlow": "2553.61856847"}, {"d": "2024-07-11", "unixTs": "1720656000", "etfFlow": "1376.77803265"}, {"d": "2024-07-12", "unixTs": "1720742400", "etfFlow": "5359.56990857"}, {"d": "2024-07-15", "unixTs": "1721001600", "etfFlow": "4648.19819464"}, {"d": "2024-07-16", "unixTs": "1721088000", "etfFlow": "6488.13901725"}, {"d": "2024-07-17", "unixTs": "1721174400", "etfFlow": "830.20034233"}, {"d": "2024-07-18", "unixTs": "1721260800", "etfFlow": "581.39260287"}, {"d": "2024-07-19", "unixTs": "1721347200", "etfFlow": "6399.44553643"}, {"d": "2024-07-22", "unixTs": "1721606400", "etfFlow": "7194.76682879"}, {"d": "2024-07-23", "unixTs": "1721692800", "etfFlow": "-1183.31690357"}, {"d": "2024-07-24", "unixTs": "1721779200", "etfFlow": "680.91345949"}, {"d": "2024-07-25", "unixTs": "1721865600", "etfFlow": "473.20487879"}, {"d": "2024-07-26", "unixTs": "1721952000", "etfFlow": "762.74906373"}, {"d": "2024-07-29", "unixTs": "1722211200", "etfFlow": "1855.91830869"}, {"d": "2024-07-30", "unixTs": "1722297600", "etfFlow": "-276.48969720"}, {"d": "2024-07-31", "unixTs": "1722384000", "etfFlow": "4.63745648"}, {"d": "2024-08-01", "unixTs": "1722470400", "etfFlow": "776.33491242"}, {"d": "2024-08-02", "unixTs": "1722556800", "etfFlow": "-3859.73772372"}, {"d": "2024-08-05", "unixTs": "1722816000", "etfFlow": "-3098.79938453"}, {"d": "2024-08-06", "unixTs": "1722902400", "etfFlow": "-2651.32389720"}, {"d": "2024-08-07", "unixTs": "1722988800", "etfFlow": "818.07023126"}, {"d": "2024-08-08", "unixTs": "1723075200", "etfFlow": "3143.33394385"}, {"d": "2024-08-09", "unixTs": "1723161600", "etfFlow": "-1477.24983964"}, {"d": "2024-08-12", "unixTs": "1723420800", "etfFlow": "468.05946271"}, {"d": "2024-08-13", "unixTs": "1723507200", "etfFlow": "644.24213121"}, {"d": "2024-08-14", "unixTs": "1723593600", "etfFlow": "-1383.39744026"}, {"d": "2024-08-15", "unixTs": "1723680000", "etfFlow": "192.56061097"}, {"d": "2024-08-16", "unixTs": "1723766400", "etfFlow": "609.22550858"}, {"d": "2024-08-19", "unixTs": "1724025600", "etfFlow": "1045.25184724"}, {"d": "2024-08-20", "unixTs": "1724112000", "etfFlow": "1488.41488218"}, {"d": "2024-08-21", "unixTs": "1724198400", "etfFlow": "646.13193246"}, {"d": "2024-08-22", "unixTs": "1724284800", "etfFlow": "1072.94585000"}, {"d": "2024-08-23", "unixTs": "1724371200", "etfFlow": "3930.94006471"}, {"d": "2024-08-26", "unixTs": "1724630400", "etfFlow": "3216.71841170"}, {"d": "2024-08-27", "unixTs": "1724716800", "etfFlow": "-2134.41230155"}, {"d": "2024-08-28", "unixTs": "1724803200", "etfFlow": "-1781.70253160"}, {"d": "2024-08-29", "unixTs": "1724889600", "etfFlow": "-1209.98066890"}, {"d": "2024-08-30", "unixTs": "1724976000", "etfFlow": "-2969.07796783"}, {"d": "2024-09-03", "unixTs": "1725321600", "etfFlow": "-4993.25308412"}, {"d": "2024-09-04", "unixTs": "1725408000", "etfFlow": "-641.01018827"}, {"d": "2024-09-05", "unixTs": "1725494400", "etfFlow": "-3762.05472960"}, {"d": "2024-09-06", "unixTs": "1725580800", "etfFlow": "-3157.56509121"}, {"d": "2024-09-09", "unixTs": "1725840000", "etfFlow": "500.56198201"}, {"d": "2024-09-10", "unixTs": "1725926400", "etfFlow": "2028.97797366"}, {"d": "2024-09-11", "unixTs": "1726012800", "etfFlow": "-764.68586520"}, {"d": "2024-09-12", "unixTs": "1726099200", "etfFlow": "670.97187678"}, {"d": "2024-09-13", "unixTs": "1726185600", "etfFlow": "4347.76278022"}, {"d": "2024-09-16", "unixTs": "1726444800", "etfFlow": "219.82753624"}, {"d": "2024-09-17", "unixTs": "1726531200", "etfFlow": "3101.02136240"}, {"d": "2024-09-18", "unixTs": "1726617600", "etfFlow": "-859.61894561"}, {"d": "2024-09-19", "unixTs": "1726704000", "etfFlow": "2512.91342025"}, {"d": "2024-09-20", "unixTs": "1726790400", "etfFlow": "1456.75761118"}, {"d": "2024-09-23", "unixTs": "1727049600", "etfFlow": "71.04962584"}, {"d": "2024-09-24", "unixTs": "1727136000", "etfFlow": "2113.67896665"}, {"d": "2024-09-25", "unixTs": "1727222400", "etfFlow": "1679.36293280"}, {"d": "2024-09-26", "unixTs": "1727308800", "etfFlow": "5621.15653888"}, {"d": "2024-09-27", "unixTs": "1727395200", "etfFlow": "7517.36643311"}, {"d": "2024-09-30", "unixTs": "1727654400", "etfFlow": "969.01610449"}, {"d": "2024-10-01", "unixTs": "1727740800", "etfFlow": "-3986.31254017"}, {"d": "2024-10-02", "unixTs": "1727827200", "etfFlow": "-1511.05444306"}, {"d": "2024-10-03", "unixTs": "1727913600", "etfFlow": "-891.95735751"}, {"d": "2024-10-04", "unixTs": "1728000000", "etfFlow": "412.55381901"}, {"d": "2024-10-07", "unixTs": "1728259200", "etfFlow": "3768.23382802"}, {"d": "2024-10-08", "unixTs": "1728345600", "etfFlow": "-299.38998143"}, {"d": "2024-10-09", "unixTs": "1728432000", "etfFlow": "-669.79835129"}, {"d": "2024-10-10", "unixTs": "1728518400", "etfFlow": "-1346.70367561"}, {"d": "2024-10-11", "unixTs": "1728604800", "etfFlow": "4060.03342406"}, {"d": "2024-10-14", "unixTs": "1728864000", "etfFlow": "8411.28808138"}, {"d": "2024-10-15", "unixTs": "1728950400", "etfFlow": "5542.77556236"}, {"d": "2024-10-16", "unixTs": "1729036800", "etfFlow": "6776.23392026"}, {"d": "2024-10-17", "unixTs": "1729123200", "etfFlow": "6987.14909820"}, {"d": "2024-10-18", "unixTs": "1729209600", "etfFlow": "4002.01562606"}, {"d": "2024-10-21", "unixTs": "1729468800", "etfFlow": "4363.84907613"}, {"d": "2024-10-22", "unixTs": "1729555200", "etfFlow": "-1173.14221581"}, {"d": "2024-10-23", "unixTs": "1729641600", "etfFlow": "2886.83920426"}, {"d": "2024-10-24", "unixTs": "1729728000", "etfFlow": "2759.39020779"}, {"d": "2024-10-25", "unixTs": "1729814400", "etfFlow": "6066.86796048"}, {"d": "2024-10-28", "unixTs": "1730073600", "etfFlow": "6862.04843808"}, {"d": "2024-10-29", "unixTs": "1730160000", "etfFlow": "11971.85644483"}, {"d": "2024-10-30", "unixTs": "1730246400", "etfFlow": "12329.83428044"}, {"d": "2024-11-01", "unixTs": "1730419200", "etfFlow": "-790.11469480"}, {"d": "2024-11-04", "unixTs": "1730678400", "etfFlow": "-7983.28723918"}, {"d": "2024-11-05", "unixTs": "1730764800", "etfFlow": "-1679.65658198"}, {"d": "2024-11-06", "unixTs": "1730851200", "etfFlow": "8215.75379340"}, {"d": "2024-11-07", "unixTs": "1730937600", "etfFlow": "18082.90759112"}, {"d": "2024-11-08", "unixTs": "1731024000", "etfFlow": "3834.92078178"}, {"d": "2024-11-11", "unixTs": "1731283200", "etfFlow": "12537.69997132"}, {"d": "2024-11-12", "unixTs": "1731369600", "etfFlow": "9284.62937096"}, {"d": "2024-11-13", "unixTs": "1731456000", "etfFlow": "5644.61091671"}, {"d": "2024-11-14", "unixTs": "1731542400", "etfFlow": "-4594.95916672"}, {"d": "2024-11-15", "unixTs": "1731628800", "etfFlow": "-2628.94894616"}, {"d": "2024-11-18", "unixTs": "1731888000", "etfFlow": "2812.74400050"}, {"d": "2024-11-19", "unixTs": "1731974400", "etfFlow": "8991.46653762"}, {"d": "2024-11-20", "unixTs": "1732060800", "etfFlow": "8453.69218409"}, {"d": "2024-11-21", "unixTs": "1732147200", "etfFlow": "10199.34241006"}, {"d": "2024-11-22", "unixTs": "1732233600", "etfFlow": "4955.61126959"}, {"d": "2024-11-25", "unixTs": "1732492800", "etfFlow": "-4663.44411914"}, {"d": "2024-11-26", "unixTs": "1732579200", "etfFlow": "-1336.59034773"}, {"d": "2024-11-27", "unixTs": "1732665600", "etfFlow": "1073.03872228"}, {"d": "2024-11-29", "unixTs": "1732838400", "etfFlow": "3285.45664135"}, {"d": "2024-12-02", "unixTs": "1733097600", "etfFlow": "3693.85922661"}, {"d": "2024-12-03", "unixTs": "1733184000", "etfFlow": "7040.86889054"}, {"d": "2024-12-04", "unixTs": "1733270400", "etfFlow": "5628.77655582"}, {"d": "2024-12-05", "unixTs": "1733356800", "etfFlow": "7908.22747714"}, {"d": "2024-12-06", "unixTs": "1733443200", "etfFlow": "3767.76686948"}, {"d": "2024-12-09", "unixTs": "1733702400", "etfFlow": "4919.38619707"}, {"d": "2024-12-10", "unixTs": "1733788800", "etfFlow": "4528.29790858"}, {"d": "2024-12-11", "unixTs": "1733875200", "etfFlow": "2202.14742263"}, {"d": "2024-12-12", "unixTs": "1733961600", "etfFlow": "5969.57422536"}, {"d": "2024-12-16", "unixTs": "1734307200", "etfFlow": "6016.68277744"}, {"d": "2024-12-17", "unixTs": "1734393600", "etfFlow": "4654.34445491"}, {"d": "2024-12-18", "unixTs": "1734480000", "etfFlow": "2740.12768418"}, {"d": "2024-12-19", "unixTs": "1734566400", "etfFlow": "-6877.38298162"}, {"d": "2024-12-23", "unixTs": "1734912000", "etfFlow": "-2389.22144785"}, {"d": "2024-12-26", "unixTs": "1735171200", "etfFlow": "4969.24011661"}, {"d": "2024-12-27", "unixTs": "1735257600", "etfFlow": "-3055.61509822"}, {"d": "2024-12-30", "unixTs": "1735516800", "etfFlow": "-4486.44410934"}, {"d": "2024-12-31", "unixTs": "1735603200", "etfFlow": "56.75142066"}, {"d": "2025-01-02", "unixTs": "1735776000", "etfFlow": "-2501.77091714"}, {"d": "2025-01-03", "unixTs": "1735862400", "etfFlow": "9254.92930466"}, {"d": "2025-01-06", "unixTs": "1736121600", "etfFlow": "9577.25788296"}, {"d": "2025-01-07", "unixTs": "1736208000", "etfFlow": "540.34547334"}, {"d": "2025-01-08", "unixTs": "1736294400", "etfFlow": "-5984.89376695"}, {"d": "2025-01-10", "unixTs": "1736467200", "etfFlow": "-1576.62925293"}, {"d": "2025-01-13", "unixTs": "1736726400", "etfFlow": "-3010.30784366"}, {"d": "2025-01-14", "unixTs": "1736812800", "etfFlow": "-2172.52913947"}, {"d": "2025-01-16", "unixTs": "1736985600", "etfFlow": "6262.39464634"}, {"d": "2025-01-17", "unixTs": "1737072000", "etfFlow": "9354.09315289"}, {"d": "2025-01-21", "unixTs": "1737417600", "etfFlow": "7572.56333533"}, {"d": "2025-01-22", "unixTs": "1737504000", "etfFlow": "2396.15854195"}, {"d": "2025-01-23", "unixTs": "1737590400", "etfFlow": "1811.20789132"}, {"d": "2025-01-24", "unixTs": "1737676800", "etfFlow": "4943.84222663"}, {"d": "2025-01-27", "unixTs": "1737936000", "etfFlow": "-4490.34900421"}, {"d": "2025-01-28", "unixTs": "1738022400", "etfFlow": "181.92938154"}, {"d": "2025-01-29", "unixTs": "1738108800", "etfFlow": "885.30664346"}, {"d": "2025-01-30", "unixTs": "1738195200", "etfFlow": "5601.62209964"}, {"d": "2025-01-31", "unixTs": "1738281600", "etfFlow": "3115.49498786"}, {"d": "2025-02-03", "unixTs": "1738540800", "etfFlow": "-2307.48613854"}, {"d": "2025-02-04", "unixTs": "1738627200", "etfFlow": "3481.92582934"}, {"d": "2025-02-05", "unixTs": "1738713600", "etfFlow": "680.32793856"}, {"d": "2025-02-06", "unixTs": "1738800000", "etfFlow": "-1452.22820711"}, {"d": "2025-02-07", "unixTs": "1738886400", "etfFlow": "1777.26388978"}, {"d": "2025-02-10", "unixTs": "1739145600", "etfFlow": "-1913.21765186"}, {"d": "2025-02-11", "unixTs": "1739232000", "etfFlow": "-591.81937757"}, {"d": "2025-02-12", "unixTs": "1739318400", "etfFlow": "-2567.60426183"}, {"d": "2025-02-13", "unixTs": "1739404800", "etfFlow": "-1624.28571281"}, {"d": "2025-02-14", "unixTs": "1739491200", "etfFlow": "724.73915281"}, {"d": "2025-02-18", "unixTs": "1739836800", "etfFlow": "-635.97480953"}, {"d": "2025-02-19", "unixTs": "1739923200", "etfFlow": "-663.23211555"}, {"d": "2025-02-20", "unixTs": "1740009600", "etfFlow": "-3707.61022590"}, {"d": "2025-02-21", "unixTs": "1740096000", "etfFlow": "-654.87411748"}, {"d": "2025-02-24", "unixTs": "1740355200", "etfFlow": "-5867.00803279"}, {"d": "2025-02-25", "unixTs": "1740441600", "etfFlow": "-12829.82304680"}, {"d": "2025-02-26", "unixTs": "1740528000", "etfFlow": "-8984.62801377"}, {"d": "2025-02-27", "unixTs": "1740614400", "etfFlow": "-3260.24973129"}, {"d": "2025-02-28", "unixTs": "1740700800", "etfFlow": "1119.37050234"}, {"d": "2025-03-03", "unixTs": "1740960000", "etfFlow": "-859.63274133"}, {"d": "2025-03-05", "unixTs": "1741132800", "etfFlow": "243.87711441"}, {"d": "2025-03-06", "unixTs": "1741219200", "etfFlow": "-1488.54932059"}, {"d": "2025-03-07", "unixTs": "1741305600", "etfFlow": "-4728.86207985"}, {"d": "2025-03-10", "unixTs": "1741564800", "etfFlow": "-3523.78478212"}, {"d": "2025-03-11", "unixTs": "1741651200", "etfFlow": "-4483.53755151"}, {"d": "2025-03-12", "unixTs": "1741737600", "etfFlow": "159.03353886"}, {"d": "2025-03-13", "unixTs": "1741824000", "etfFlow": "-1666.86620878"}, {"d": "2025-03-14", "unixTs": "1741910400", "etfFlow": "-703.87507620"}, {"d": "2025-03-17", "unixTs": "1742169600", "etfFlow": "3268.50491034"}, {"d": "2025-03-18", "unixTs": "1742256000", "etfFlow": "2529.00290553"}, {"d": "2025-03-19", "unixTs": "1742342400", "etfFlow": "135.98506504"}, {"d": "2025-03-20", "unixTs": "1742428800", "etfFlow": "1969.68863660"}, {"d": "2025-03-21", "unixTs": "1742515200", "etfFlow": "988.46895439"}, {"d": "2025-03-24", "unixTs": "1742774400", "etfFlow": "964.24095408"}, {"d": "2025-03-25", "unixTs": "1742860800", "etfFlow": "306.55603502"}, {"d": "2025-03-26", "unixTs": "1742947200", "etfFlow": "1031.82208289"}, {"d": "2025-03-27", "unixTs": "1743033600", "etfFlow": "1020.50967582"}, {"d": "2025-03-28", "unixTs": "1743120000", "etfFlow": "-1105.45627847"}, {"d": "2025-03-31", "unixTs": "1743379200", "etfFlow": "-734.88885138"}, {"d": "2025-04-01", "unixTs": "1743465600", "etfFlow": "-1851.53214263"}, {"d": "2025-04-02", "unixTs": "1743552000", "etfFlow": "2641.85491135"}, {"d": "2025-04-03", "unixTs": "1743638400", "etfFlow": "-1203.39994392"}, {"d": "2025-04-07", "unixTs": "1743984000", "etfFlow": "-1308.20497936"}, {"d": "2025-04-08", "unixTs": "1744070400", "etfFlow": "-4273.65934085"}, {"d": "2025-04-09", "unixTs": "1744156800", "etfFlow": "-1537.70638311"}, {"d": "2025-04-10", "unixTs": "1744243200", "etfFlow": "-1879.10962945"}, {"d": "2025-04-11", "unixTs": "1744329600", "etfFlow": "-11.99617569"}, {"d": "2025-04-14", "unixTs": "1744588800", "etfFlow": "17.73279534"}, {"d": "2025-04-15", "unixTs": "1744675200", "etfFlow": "913.09636458"}, {"d": "2025-04-16", "unixTs": "1744761600", "etfFlow": "-2033.23680860"}, {"d": "2025-04-17", "unixTs": "1744848000", "etfFlow": "1258.52678602"}, {"d": "2025-04-21", "unixTs": "1745193600", "etfFlow": "4364.66183504"}, {"d": "2025-04-22", "unixTs": "1745280000", "etfFlow": "9761.95559635"}, {"d": "2025-04-23", "unixTs": "1745366400", "etfFlow": "9786.99773682"}, {"d": "2025-04-24", "unixTs": "1745452800", "etfFlow": "4709.64898006"}, {"d": "2025-04-25", "unixTs": "1745539200", "etfFlow": "4009.64793887"}, {"d": "2025-04-28", "unixTs": "1745798400", "etfFlow": "6218.83605330"}, {"d": "2025-04-29", "unixTs": "1745884800", "etfFlow": "1836.28888825"}, {"d": "2025-04-30", "unixTs": "1745971200", "etfFlow": "-597.43158000"}, {"d": "2025-05-01", "unixTs": "1746057600", "etfFlow": "4382.24629159"}, {"d": "2025-05-02", "unixTs": "1746144000", "etfFlow": "6969.07631417"}, {"d": "2025-05-05", "unixTs": "1746403200", "etfFlow": "4485.85417390"}, {"d": "2025-05-06", "unixTs": "1746489600", "etfFlow": "-886.44848801"}, {"d": "2025-05-07", "unixTs": "1746576000", "etfFlow": "1464.93560241"}, {"d": "2025-05-08", "unixTs": "1746662400", "etfFlow": "1139.03681730"}, {"d": "2025-05-09", "unixTs": "1746748800", "etfFlow": "3122.18275738"}, {"d": "2025-05-12", "unixTs": "1747008000", "etfFlow": "50.52464270"}, {"d": "2025-05-13", "unixTs": "1747094400", "etfFlow": "-877.61654703"}, {"d": "2025-05-14", "unixTs": "1747180800", "etfFlow": "3084.78913274"}, {"d": "2025-05-15", "unixTs": "1747267200", "etfFlow": "1107.82989543"}, {"d": "2025-05-16", "unixTs": "1747353600", "etfFlow": "2512.40101659"}, {"d": "2025-05-19", "unixTs": "1747612800", "etfFlow": "6319.12854891"}, {"d": "2025-05-20", "unixTs": "1747699200", "etfFlow": "3079.70571445"}, {"d": "2025-05-21", "unixTs": "1747785600", "etfFlow": "5533.93919140"}, {"d": "2025-05-22", "unixTs": "1747872000", "etfFlow": "8385.58515205"}, {"d": "2025-05-23", "unixTs": "1747958400", "etfFlow": "1973.12212538"}, {"d": "2025-05-27", "unixTs": "1748304000", "etfFlow": "3533.62898289"}, {"d": "2025-05-28", "unixTs": "1748390400", "etfFlow": "4010.36550564"}, {"d": "2025-05-29", "unixTs": "1748476800", "etfFlow": "-3279.96120523"}, {"d": "2025-05-30", "unixTs": "1748563200", "etfFlow": "-5925.10367224"}, {"d": "2025-06-02", "unixTs": "1748822400", "etfFlow": "-2525.97512328"}, {"d": "2025-06-03", "unixTs": "1748908800", "etfFlow": "3555.99002105"}, {"d": "2025-06-04", "unixTs": "1748995200", "etfFlow": "830.28858477"}, {"d": "2025-06-05", "unixTs": "1749081600", "etfFlow": "-2738.29267883"}, {"d": "2025-06-06", "unixTs": "1749168000", "etfFlow": "-457.76210152"}, {"d": "2025-06-09", "unixTs": "1749427200", "etfFlow": "3504.59576192"}, {"d": "2025-06-10", "unixTs": "1749513600", "etfFlow": "3917.36044401"}, {"d": "2025-06-11", "unixTs": "1749600000", "etfFlow": "1515.01504779"}, {"d": "2025-06-12", "unixTs": "1749686400", "etfFlow": "814.15873297"}, {"d": "2025-06-13", "unixTs": "1749772800", "etfFlow": "2845.56006848"}, {"d": "2025-06-16", "unixTs": "1750032000", "etfFlow": "3843.57405719"}, {"d": "2025-06-17", "unixTs": "1750118400", "etfFlow": "2069.22792650"}, {"d": "2025-06-18", "unixTs": "1750204800", "etfFlow": "3704.68014727"}, {"d": "2025-06-20", "unixTs": "1750377600", "etfFlow": "61.97049190"}, {"d": "2025-06-23", "unixTs": "1750636800", "etfFlow": "3323.31890471"}, {"d": "2025-06-24", "unixTs": "1750723200", "etfFlow": "5554.71328172"}, {"d": "2025-06-25", "unixTs": "1750809600", "etfFlow": "5104.13929651"}, {"d": "2025-06-26", "unixTs": "1750896000", "etfFlow": "2118.43771632"}, {"d": "2025-06-27", "unixTs": "1750982400", "etfFlow": "4680.13364005"}, {"d": "2025-06-30", "unixTs": "1751241600", "etfFlow": "952.84223151"}, {"d": "2025-07-01", "unixTs": "1751328000", "etfFlow": "-3241.56304175"}, {"d": "2025-07-02", "unixTs": "1751414400", "etfFlow": "3743.78709036"}, {"d": "2025-07-03", "unixTs": "1751500800", "etfFlow": "5489.26523744"}, {"d": "2025-07-07", "unixTs": "1751846400", "etfFlow": "2000.01106696"}, {"d": "2025-07-08", "unixTs": "1751932800", "etfFlow": "735.15488454"}, {"d": "2025-07-09", "unixTs": "1752019200", "etfFlow": "1935.97363225"}, {"d": "2025-07-10", "unixTs": "1752105600", "etfFlow": "10145.51129816"}, {"d": "2025-07-11", "unixTs": "1752192000", "etfFlow": "8753.71714566"}, {"d": "2025-07-14", "unixTs": "1752451200", "etfFlow": "2480.99841774"}, {"d": "2025-07-15", "unixTs": "1752537600", "etfFlow": "3424.49196118"}, {"d": "2025-07-16", "unixTs": "1752624000", "etfFlow": "6732.91279049"}, {"d": "2025-07-17", "unixTs": "1752710400", "etfFlow": "4373.16087081"}, {"d": "2025-07-18", "unixTs": "1752796800", "etfFlow": "3081.59196197"}, {"d": "2025-07-21", "unixTs": "1753056000", "etfFlow": "-1118.94128134"}, {"d": "2025-07-22", "unixTs": "1753142400", "etfFlow": "-566.34571011"}, {"d": "2025-07-23", "unixTs": "1753228800", "etfFlow": "-723.13169323"}, {"d": "2025-07-24", "unixTs": "1753315200", "etfFlow": "1915.06663529"}, {"d": "2025-07-25", "unixTs": "1753401600", "etfFlow": "1113.00040045"}, {"d": "2025-07-28", "unixTs": "1753660800", "etfFlow": "1331.10057161"}, {"d": "2025-07-29", "unixTs": "1753747200", "etfFlow": "678.70594354"}, {"d": "2025-07-30", "unixTs": "1753833600", "etfFlow": "400.05896866"}, {"d": "2025-07-31", "unixTs": "1753920000", "etfFlow": "-990.95075523"}, {"d": "2025-08-01", "unixTs": "1754006400", "etfFlow": "-7170.59166527"}, {"d": "2025-08-04", "unixTs": "1754265600", "etfFlow": "-2808.16133937"}, {"d": "2025-08-05", "unixTs": "1754352000", "etfFlow": "-1719.37306022"}, {"d": "2025-08-06", "unixTs": "1754438400", "etfFlow": "796.28161695"}, {"d": "2025-08-07", "unixTs": "1754524800", "etfFlow": "2361.95839165"}, {"d": "2025-08-08", "unixTs": "1754611200", "etfFlow": "3459.80487082"}, {"d": "2025-08-11", "unixTs": "1754870400", "etfFlow": "1499.88997517"}, {"d": "2025-08-13", "unixTs": "1755043200", "etfFlow": "703.97045921"}, {"d": "2025-08-14", "unixTs": "1755129600", "etfFlow": "1947.51051960"}, {"d": "2025-08-15", "unixTs": "1755216000", "etfFlow": "-120.19311715"}, {"d": "2025-08-18", "unixTs": "1755475200", "etfFlow": "-1046.31545542"}, {"d": "2025-08-19", "unixTs": "1755561600", "etfFlow": "-4635.64595783"}, {"d": "2025-08-20", "unixTs": "1755648000", "etfFlow": "-2764.32801908"}, {"d": "2025-08-21", "unixTs": "1755734400", "etfFlow": "-1730.35170488"}, {"d": "2025-08-22", "unixTs": "1755820800", "etfFlow": "-198.62847545"}, {"d": "2025-08-25", "unixTs": "1756080000", "etfFlow": "1990.19828138"}, {"d": "2025-08-26", "unixTs": "1756166400", "etfFlow": "787.34319982"}, {"d": "2025-08-27", "unixTs": "1756252800", "etfFlow": "731.67021900"}, {"d": "2025-08-28", "unixTs": "1756339200", "etfFlow": "1590.48867638"}, {"d": "2025-08-29", "unixTs": "1756425600", "etfFlow": "-1168.02903980"}, {"d": "2025-09-02", "unixTs": "1756771200", "etfFlow": "2994.39593151"}, {"d": "2025-09-03", "unixTs": "1756857600", "etfFlow": "2688.29845245"}, {"d": "2025-09-04", "unixTs": "1756944000", "etfFlow": "-2009.90736608"}, {"d": "2025-09-05", "unixTs": "1757030400", "etfFlow": "-1446.10443534"}, {"d": "2025-09-08", "unixTs": "1757289600", "etfFlow": "3249.42011169"}, {"d": "2025-09-09", "unixTs": "1757376000", "etfFlow": "206.30319630"}, {"d": "2025-09-10", "unixTs": "1757462400", "etfFlow": "6508.33958576"}, {"d": "2025-09-11", "unixTs": "1757548800", "etfFlow": "4787.52746384"}, {"d": "2025-09-12", "unixTs": "1757635200", "etfFlow": "5530.81849573"}, {"d": "2025-09-15", "unixTs": "1757894400", "etfFlow": "2251.75794299"}, {"d": "2025-09-16", "unixTs": "1757980800", "etfFlow": "2502.59260588"}, {"d": "2025-09-17", "unixTs": "1758067200", "etfFlow": "-440.05711172"}, {"d": "2025-09-18", "unixTs": "1758153600", "etfFlow": "1392.99062953"}, {"d": "2025-09-19", "unixTs": "1758240000", "etfFlow": "1925.39946293"}, {"d": "2025-09-22", "unixTs": "1758499200", "etfFlow": "-3221.03595722"}, {"d": "2025-09-23", "unixTs": "1758585600", "etfFlow": "-926.35236928"}, {"d": "2025-09-24", "unixTs": "1758672000", "etfFlow": "2126.63402146"}, {"d": "2025-09-25", "unixTs": "1758758400", "etfFlow": "-2321.22815044"}, {"d": "2025-09-26", "unixTs": "1758844800", "etfFlow": "-3814.20100771"}, {"d": "2025-09-29", "unixTs": "1759104000", "etfFlow": "4530.30285947"}, {"d": "2025-09-30", "unixTs": "1759190400", "etfFlow": "3771.98759491"}, {"d": "2025-10-01", "unixTs": "1759276800", "etfFlow": "5708.09470669"}, {"d": "2025-10-02", "unixTs": "1759363200", "etfFlow": "5202.44952395"}, {"d": "2025-10-03", "unixTs": "1759449600", "etfFlow": "8051.61483874"}, {"d": "2025-10-06", "unixTs": "1759708800", "etfFlow": "9655.15942266"}, {"d": "2025-10-07", "unixTs": "1759795200", "etfFlow": "7201.38636965"}, {"d": "2025-10-08", "unixTs": "1759881600", "etfFlow": "3571.59201629"}, {"d": "2025-10-09", "unixTs": "1759968000", "etfFlow": "1626.60015534"}, {"d": "2025-10-10", "unixTs": "1760054400", "etfFlow": "-39.55875207"}, {"d": "2025-10-13", "unixTs": "1760313600", "etfFlow": "-2830.08431474"}, {"d": "2025-10-14", "unixTs": "1760400000", "etfFlow": "906.22647768"}, {"d": "2025-10-15", "unixTs": "1760486400", "etfFlow": "-938.99785984"}, {"d": "2025-10-16", "unixTs": "1760572800", "etfFlow": "-4909.60148384"}, {"d": "2025-10-17", "unixTs": "1760659200", "etfFlow": "-3438.19649280"}, {"d": "2025-10-20", "unixTs": "1760918400", "etfFlow": "-365.14740501"}, {"d": "2025-10-21", "unixTs": "1761004800", "etfFlow": "4390.04896675"}, {"d": "2025-10-22", "unixTs": "1761091200", "etfFlow": "-941.78723747"}, {"d": "2025-10-23", "unixTs": "1761177600", "etfFlow": "184.44327834"}, {"d": "2025-10-24", "unixTs": "1761264000", "etfFlow": "816.03284300"}, {"d": "2025-10-27", "unixTs": "1761523200", "etfFlow": "1308.64153993"}, {"d": "2025-10-28", "unixTs": "1761609600", "etfFlow": "1791.45664132"}, {"d": "2025-10-29", "unixTs": "1761696000", "etfFlow": "-4271.07883180"}, {"d": "2025-10-30", "unixTs": "1761782400", "etfFlow": "-4521.39648787"}, {"d": "2025-10-31", "unixTs": "1761868800", "etfFlow": "-1748.90538834"}, {"d": "2025-11-03", "unixTs": "1762128000", "etfFlow": "-1751.24272614"}, {"d": "2025-11-04", "unixTs": "1762214400", "etfFlow": "-5588.56900341"}, {"d": "2025-11-05", "unixTs": "1762300800", "etfFlow": "-1318.37399330"}, {"d": "2025-11-06", "unixTs": "1762387200", "etfFlow": "2369.57991944"}, {"d": "2025-11-07", "unixTs": "1762473600", "etfFlow": "-5398.90023094"}, {"d": "2025-11-10", "unixTs": "1762732800", "etfFlow": "11.31195293"}, {"d": "2025-11-11", "unixTs": "1762819200", "etfFlow": "5088.64311367"}, {"d": "2025-11-12", "unixTs": "1762905600", "etfFlow": "-2734.99393802"}, {"d": "2025-11-13", "unixTs": "1762992000", "etfFlow": "-8663.94074994"}, {"d": "2025-11-14", "unixTs": "1763078400", "etfFlow": "-5207.26702596"}, {"d": "2025-11-17", "unixTs": "1763337600", "etfFlow": "-2770.05684131"}, {"d": "2025-11-18", "unixTs": "1763424000", "etfFlow": "-4015.66445596"}, {"d": "2025-11-19", "unixTs": "1763510400", "etfFlow": "825.66363059"}, {"d": "2025-11-20", "unixTs": "1763596800", "etfFlow": "-10392.20469802"}, {"d": "2025-11-21", "unixTs": "1763683200", "etfFlow": "2806.42122245"}, {"d": "2025-11-24", "unixTs": "1763942400", "etfFlow": "-1709.70920035"}, {"d": "2025-11-25", "unixTs": "1764028800", "etfFlow": "1471.95815728"}, {"d": "2025-11-26", "unixTs": "1764115200", "etfFlow": "233.27991869"}, {"d": "2025-11-28", "unixTs": "1764288000", "etfFlow": "784.70052367"}, {"d": "2025-12-01", "unixTs": "1764547200", "etfFlow": "98.26062871"}, {"d": "2025-12-02", "unixTs": "1764633600", "etfFlow": "639.14850416"}, {"d": "2025-12-03", "unixTs": "1764720000", "etfFlow": "-159.17256951"}, {"d": "2025-12-04", "unixTs": "1764806400", "etfFlow": "-2110.50104191"}, {"d": "2025-12-05", "unixTs": "1764892800", "etfFlow": "613.80042122"}, {"d": "2025-12-08", "unixTs": "1765152000", "etfFlow": "-666.12887830"}, {"d": "2025-12-09", "unixTs": "1765238400", "etfFlow": "1636.69732979"}, {"d": "2025-12-10", "unixTs": "1765324800", "etfFlow": "2426.63289623"}, {"d": "2025-12-11", "unixTs": "1765411200", "etfFlow": "-836.71871642"}, {"d": "2025-12-12", "unixTs": "1765497600", "etfFlow": "543.55281522"}, {"d": "2025-12-15", "unixTs": "1765756800", "etfFlow": "-4141.16172253"}, {"d": "2025-12-16", "unixTs": "1765843200", "etfFlow": "-3158.88691689"}, {"d": "2025-12-17", "unixTs": "1765929600", "etfFlow": "5313.76225162"}, {"d": "2025-12-18", "unixTs": "1766016000", "etfFlow": "-1888.00285444"}, {"d": "2025-12-19", "unixTs": "1766102400", "etfFlow": "-1795.43448233"}, {"d": "2025-12-22", "unixTs": "1766361600", "etfFlow": "-1607.24345094"}, {"d": "2025-12-23", "unixTs": "1766448000", "etfFlow": "-2158.73467266"}, {"d": "2025-12-24", "unixTs": "1766534400", "etfFlow": "-2000.55529870"}, {"d": "2025-12-26", "unixTs": "1766707200", "etfFlow": "-953.80069089"}, {"d": "2025-12-29", "unixTs": "1766966400", "etfFlow": "-221.49916733"}, {"d": "2025-12-30", "unixTs": "1767052800", "etfFlow": "4015.67403074"}, {"d": "2025-12-31", "unixTs": "1767139200", "etfFlow": "-3977.51393850"}, {"d": "2026-01-02", "unixTs": "1767312000", "etfFlow": "5240.14960971"}, {"d": "2026-01-05", "unixTs": "1767571200", "etfFlow": "7421.08059352"}, {"d": "2026-01-06", "unixTs": "1767657600", "etfFlow": "-2599.00457172"}, {"d": "2026-01-07", "unixTs": "1767744000", "etfFlow": "-5329.52047616"}, {"d": "2026-01-08", "unixTs": "1767830400", "etfFlow": "-4377.75521752"}, {"d": "2026-01-09", "unixTs": "1767916800", "etfFlow": "-2761.22261513"}, {"d": "2026-01-12", "unixTs": "1768176000", "etfFlow": "1280.43150864"}, {"d": "2026-01-13", "unixTs": "1768262400", "etfFlow": "7909.38532274"}, {"d": "2026-01-14", "unixTs": "1768348800", "etfFlow": "8692.96466792"}, {"d": "2026-01-15", "unixTs": "1768435200", "etfFlow": "1048.70798836"}, {"d": "2026-01-16", "unixTs": "1768521600", "etfFlow": "-4133.45477296"}, {"d": "2026-01-20", "unixTs": "1768867200", "etfFlow": "-5479.58785460"}, {"d": "2026-01-21", "unixTs": "1768953600", "etfFlow": "-7909.65454630"}, {"d": "2026-01-22", "unixTs": "1769040000", "etfFlow": "-360.19629283"}, {"d": "2026-01-23", "unixTs": "1769126400", "etfFlow": "-1157.20330913"}, {"d": "2026-01-26", "unixTs": "1769385600", "etfFlow": "76.97754067"}, {"d": "2026-01-27", "unixTs": "1769472000", "etfFlow": "-1651.34855026"}, {"d": "2026-01-28", "unixTs": "1769558400", "etfFlow": "-219.78566821"}, {"d": "2026-01-29", "unixTs": "1769644800", "etfFlow": "-9675.77089107"}, {"d": "2026-01-30", "unixTs": "1769731200", "etfFlow": "-6066.62691547"}, {"d": "2026-02-02", "unixTs": "1769990400", "etfFlow": "7136.99508223"}, {"d": "2026-02-03", "unixTs": "1770076800", "etfFlow": "-3593.85401152"}, {"d": "2026-02-04", "unixTs": "1770163200", "etfFlow": "-8167.43192045"}, {"d": "2026-02-06", "unixTs": "1770336000", "etfFlow": "5252.82506516"}, {"d": "2026-02-09", "unixTs": "1770595200", "etfFlow": "2062.80664616"}, {"d": "2026-02-10", "unixTs": "1770681600", "etfFlow": "2423.97620417"}, {"d": "2026-02-11", "unixTs": "1770768000", "etfFlow": "-4124.51364263"}, {"d": "2026-02-12", "unixTs": "1770854400", "etfFlow": "-6194.35871309"}, {"d": "2026-02-13", "unixTs": "1770940800", "etfFlow": "219.28282816"}, {"d": "2026-02-17", "unixTs": "1771286400", "etfFlow": "-1554.74086566"}, {"d": "2026-02-18", "unixTs": "1771372800", "etfFlow": "-2008.11359358"}, {"d": "2026-02-19", "unixTs": "1771459200", "etfFlow": "-2477.12794368"}, {"d": "2026-02-20", "unixTs": "1771545600", "etfFlow": "1296.02070099"}, {"d": "2026-02-23", "unixTs": "1771804800", "etfFlow": "-3150.41391551"}, {"d": "2026-02-24", "unixTs": "1771891200", "etfFlow": "4018.79172175"}, {"d": "2026-02-25", "unixTs": "1771977600", "etfFlow": "7445.78194488"}, {"d": "2026-02-26", "unixTs": "1772064000", "etfFlow": "3767.81355327"}, {"d": "2026-02-27", "unixTs": "1772150400", "etfFlow": "-417.52616441"}, {"d": "2026-03-02", "unixTs": "1772409600", "etfFlow": "6648.03472982"}, {"d": "2026-03-03", "unixTs": "1772496000", "etfFlow": "3290.89779899"}, {"d": "2026-03-04", "unixTs": "1772582400", "etfFlow": "6356.35235586"}, {"d": "2026-03-05", "unixTs": "1772668800", "etfFlow": "-3210.42766395"}, {"d": "2026-03-06", "unixTs": "1772755200", "etfFlow": "-5113.83332951"}, {"d": "2026-03-09", "unixTs": "1773014400", "etfFlow": "2438.40017212"}, {"d": "2026-03-10", "unixTs": "1773100800", "etfFlow": "3532.60204660"}, {"d": "2026-03-11", "unixTs": "1773187200", "etfFlow": "1638.72453206"}, {"d": "2026-03-12", "unixTs": "1773273600", "etfFlow": "762.70829961"}, {"d": "2026-03-13", "unixTs": "1773360000", "etfFlow": "2543.35212499"}, {"d": "2026-03-16", "unixTs": "1773619200", "etfFlow": "2668.48821353"}, {"d": "2026-03-17", "unixTs": "1773705600", "etfFlow": "2691.46617944"}, {"d": "2026-03-18", "unixTs": "1773792000", "etfFlow": "-2294.60937688"}, {"d": "2026-03-19", "unixTs": "1773878400", "etfFlow": "-1289.51268391"}, {"d": "2026-03-20", "unixTs": "1773964800", "etfFlow": "-737.47965529"}, {"d": "2026-03-23", "unixTs": "1774224000", "etfFlow": "2364.04576927"}, {"d": "2026-03-24", "unixTs": "1774310400", "etfFlow": "-943.20892721"}, {"d": "2026-03-25", "unixTs": "1774396800", "etfFlow": "109.42561773"}, {"d": "2026-03-26", "unixTs": "1774483200", "etfFlow": "-2492.61630314"}, {"d": "2026-03-27", "unixTs": "1774569600", "etfFlow": "-3405.61536671"}, {"d": "2026-03-30", "unixTs": "1774828800", "etfFlow": "1041.24106807"}, {"d": "2026-03-31", "unixTs": "1774915200", "etfFlow": "1722.49838456"}, {"d": "2026-04-01", "unixTs": "1775001600", "etfFlow": "-2550.03108156"}, {"d": "2026-04-02", "unixTs": "1775088000", "etfFlow": "134.51242342"}, {"d": "2026-04-06", "unixTs": "1775433600", "etfFlow": "6857.43413119"}, {"d": "2026-04-07", "unixTs": "1775520000", "etfFlow": "-2207.97043193"}, {"d": "2026-04-08", "unixTs": "1775606400", "etfFlow": "-1320.95270304"}, {"d": "2026-04-09", "unixTs": "1775692800", "etfFlow": "4988.25164475"}, {"d": "2026-04-10", "unixTs": "1775779200", "etfFlow": "3520.45720774"}, {"d": "2026-04-13", "unixTs": "1776038400", "etfFlow": "-3899.09278718"}, {"d": "2026-04-14", "unixTs": "1776124800", "etfFlow": "5546.45464526"}, {"d": "2026-04-15", "unixTs": "1776211200", "etfFlow": "2489.23367463"}, {"d": "2026-04-16", "unixTs": "1776297600", "etfFlow": "347.55631324"}, {"d": "2026-04-17", "unixTs": "1776384000", "etfFlow": "8609.27788944"}, {"d": "2026-04-20", "unixTs": "1776643200", "etfFlow": "3144.53192055"}, {"d": "2026-04-21", "unixTs": "1776729600", "etfFlow": "155.04396796"}, {"d": "2026-04-23", "unixTs": "1776902400", "etfFlow": "2854.26927761"}, {"d": "2026-04-24", "unixTs": "1776988800", "etfFlow": "185.94016232"}, {"d": "2026-04-27", "unixTs": "1777248000", "etfFlow": "-3406.84202681"}, {"d": "2026-04-29", "unixTs": "1777420800", "etfFlow": "-1815.42294495"}, {"d": "2026-04-30", "unixTs": "1777507200", "etfFlow": "307.99630709"}, {"d": "2026-05-01", "unixTs": "1777593600", "etfFlow": "8060.65134224"}, {"d": "2026-05-04", "unixTs": "1777852800", "etfFlow": "6668.24444479"}, {"d": "2026-05-06", "unixTs": "1778025600", "etfFlow": "567.81436363"}, {"d": "2026-05-07", "unixTs": "1778112000", "etfFlow": "-3356.71160095"}, {"d": "2026-05-08", "unixTs": "1778198400", "etfFlow": "-1817.16836057"}, {"d": "2026-05-11", "unixTs": "1778457600", "etfFlow": "332.86527397"}, {"d": "2026-05-12", "unixTs": "1778544000", "etfFlow": "-2897.21662584"}, {"d": "2026-05-13", "unixTs": "1778630400", "etfFlow": "-7950.36961571"}, {"d": "2026-05-14", "unixTs": "1778716800", "etfFlow": "1617.47658967"}, {"d": "2026-05-15", "unixTs": "1778803200", "etfFlow": "-3673.00098988"}, {"d": "2026-05-18", "unixTs": "1779062400", "etfFlow": "-8426.01263031"}, {"d": "2026-05-19", "unixTs": "1779148800", "etfFlow": "-4310.77913367"}, {"d": "2026-05-20", "unixTs": "1779235200", "etfFlow": "-910.75655177"}, {"d": "2026-05-21", "unixTs": "1779321600", "etfFlow": "-1300.33504539"}, {"d": "2026-05-22", "unixTs": "1779408000", "etfFlow": "-1392.13206839"}, {"d": "2026-05-26", "unixTs": "1779753600", "etfFlow": "-4400.12422660"}, {"d": "2026-05-27", "unixTs": "1779840000", "etfFlow": "-9874.94399445"}, {"d": "2026-05-28", "unixTs": "1779926400", "etfFlow": "-3038.07330883"}, {"d": "2026-05-29", "unixTs": "1780012800", "etfFlow": "-1708.87960383"}, {"d": "2026-06-01", "unixTs": "1780272000", "etfFlow": "-6782.68057967"}, {"d": "2026-06-02", "unixTs": "1780358400", "etfFlow": "-7801.24130218"}, {"d": "2026-06-03", "unixTs": "1780444800", "etfFlow": "-6174.43668513"}, {"d": "2026-06-04", "unixTs": "1780531200", "etfFlow": "50.28343320"}, {"d": "2026-06-05", "unixTs": "1780617600", "etfFlow": "-5347.44383791"}, {"d": "2026-06-08", "unixTs": "1780876800", "etfFlow": "-1448.27373042"}, {"d": "2026-06-09", "unixTs": "1780963200", "etfFlow": "-1255.66875630"}, {"d": "2026-06-10", "unixTs": "1781049600", "etfFlow": "-3481.72427314"}, {"d": "2026-06-11", "unixTs": "1781136000", "etfFlow": "-354.46848158"}, {"d": "2026-06-12", "unixTs": "1781222400", "etfFlow": "1353.27510253"}, {"d": "2026-06-15", "unixTs": "1781481600", "etfFlow": "-978.51810533"}, {"d": "2026-06-16", "unixTs": "1781568000", "etfFlow": "155.39744532"}, {"d": "2026-06-17", "unixTs": "1781654400", "etfFlow": "-1276.38314381"}, {"d": "2026-06-18", "unixTs": "1781740800", "etfFlow": "-1443.45792720"}, {"d": "2026-06-22", "unixTs": "1782086400", "etfFlow": "-1068.46339773"}, {"d": "2026-06-23", "unixTs": "1782172800", "etfFlow": "-1818.08454004"}, {"d": "2026-06-24", "unixTs": "1782259200", "etfFlow": "-7700.11417428"}, {"d": "2026-06-25", "unixTs": "1782345600", "etfFlow": "-11554.63531267"}, {"d": "2026-06-26", "unixTs": "1782432000", "etfFlow": "-7413.08865976"}, {"d": "2026-06-29", "unixTs": "1782691200", "etfFlow": "-3838.77410889"}, {"d": "2026-06-30", "unixTs": "1782777600", "etfFlow": "-3803.49787890"}, {"d": "2026-07-01", "unixTs": "1782864000", "etfFlow": "-4927.94545365"}, {"d": "2026-07-02", "unixTs": "1782950400", "etfFlow": "3637.80251568"}, {"d": "2026-07-06", "unixTs": "1783296000", "etfFlow": "4147.47585865"}, {"d": "2026-07-07", "unixTs": "1783382400", "etfFlow": "338.80612640"}, {"d": "2026-07-08", "unixTs": "1783468800", "etfFlow": "-1364.64368260"}, {"d": "2026-07-09", "unixTs": "1783555200", "etfFlow": "-1508.16466788"}, {"d": "2026-07-10", "unixTs": "1783641600", "etfFlow": "1409.88686073"}, {"d": "2026-07-13", "unixTs": "1783900800", "etfFlow": "-6836.04868617"}, {"d": "2026-07-14", "unixTs": "1783987200", "etfFlow": "2788.96672920"}, {"d": "2026-07-15", "unixTs": "1784073600", "etfFlow": "1662.93380691"}, {"d": "2026-07-16", "unixTs": "1784160000", "etfFlow": "1240.19793368"}, {"d": "2026-07-17", "unixTs": "1784246400", "etfFlow": "2069.90690004"}, {"d": "2026-07-20", "unixTs": "1784505600", "etfFlow": "3479.49225097"}, {"d": "2026-07-21", "unixTs": "1784592000", "etfFlow": "3060.09826074"}, {"d": "2026-07-22", "unixTs": "1784678400", "etfFlow": "1047.23648763"}, {"d": "2026-07-23", "unixTs": "1784764800", "etfFlow": "-3458.05421154"}, {"d": "2026-07-24", "unixTs": "1784851200", "etfFlow": "-3745.70316486"}, {"d": "2026-07-27", "unixTs": "1785110400", "etfFlow": "-182.05147107"}, {"d": "2026-07-28", "unixTs": "1785196800", "etfFlow": "-779.87146785"}, {"d": "2026-07-29", "unixTs": "1785283200", "etfFlow": "502.31090794"}, {"d": "2026-07-30", "unixTs": "1785369600", "etfFlow": "3595.69237908"}, {"d": "2026-07-31", "unixTs": "1785456000", "etfFlow": "-4221.06154610"}, {"d": "2026-08-03", "unixTs": "1785715200", "etfFlow": "2680.42658431"}, {"d": "2026-08-04", "unixTs": "1785801600", "etfFlow": "3296.37081411"}, {"d": "2026-08-05", "unixTs": "1785888000", "etfFlow": "3782.67817740"}, {"d": "2026-08-06", "unixTs": "1785974400", "etfFlow": "2001.17524845"}, {"d": "2026-08-07", "unixTs": "1786060800", "etfFlow": "1567.77098444"}, {"d": "2026-08-10", "unixTs": "1786320000", "etfFlow": "-2262.63645352"}, {"d": "2026-08-11", "unixTs": "1786406400", "etfFlow": "122.74295264"}, {"d": "2026-08-12", "unixTs": "1786492800", "etfFlow": "-964.33998735"}, {"d": "2026-08-13", "unixTs": "1786579200", "etfFlow": "-2067.98617308"}, {"d": "2026-08-14", "unixTs": "1786665600", "etfFlow": "-893.13097603"}, {"d": "2026-08-17", "unixTs": "1786924800", "etfFlow": "4617.11759242"}, {"d": "2026-08-18", "unixTs": "1787011200", "etfFlow": "2925.98412902"}, {"d": "2026-08-19", "unixTs": "1787097600", "etfFlow": "7466.66992808"}, {"d": "2026-08-20", "unixTs": "1787184000", "etfFlow": "8297.41720129"}, {"d": "2026-08-21", "unixTs": "1787270400", "etfFlow": "3924.23754878"}, {"d": "2026-08-24", "unixTs": "1787529600", "etfFlow": "4279.13236841"}, {"d": "2026-08-25", "unixTs": "1787616000", "etfFlow": "3998.65634951"}, {"d": "2026-08-26", "unixTs": "1787702400", "etfFlow": "2940.91405794"}, {"d": "2026-08-27", "unixTs": "1787788800", "etfFlow": "3017.53246782"}, {"d": "2026-08-28", "unixTs": "1787875200", "etfFlow": "-2597.90093664"}, {"d": "2026-08-31", "unixTs": "1788134400", "etfFlow": "2759.31832691"}, {"d": "2026-09-01", "unixTs": "1788220800", "etfFlow": "-3055.25156376"}, {"d": "2026-09-02", "unixTs": "1788307200", "etfFlow": "1309.77719806"}, {"d": "2026-09-03", "unixTs": "1788393600", "etfFlow": "8995.20950502"}, {"d": "2026-09-04", "unixTs": "1788480000", "etfFlow": "2191.22228206"}, {"d": "2026-09-08", "unixTs": "1788825600", "etfFlow": "-594.04160929"}, {"d": "2026-09-09", "unixTs": "1788912000", "etfFlow": "-1536.93729688"}, {"d": "2026-09-10", "unixTs": "1788998400", "etfFlow": "-3686.95333320"}, {"d": "2026-09-11", "unixTs": "1789084800", "etfFlow": "-171.03581594"}, {"d": "2026-09-14", "unixTs": "1789344000", "etfFlow": "2042.69885833"}, {"d": "2026-09-15", "unixTs": "1789430400", "etfFlow": "-5953.70055654"}, {"d": "2026-09-16", "unixTs": "1789516800", "etfFlow": "-3889.20551249"}, {"d": "2026-09-17", "unixTs": "1789603200", "etfFlow": "2088.05431391"}, {"d": "2026-09-18", "unixTs": "1789689600", "etfFlow": "5349.36709163"}, {"d": "2026-09-21", "unixTs": "1789948800", "etfFlow": "11548.42565721"}, {"d": "2026-09-22", "unixTs": "1790035200", "etfFlow": "8270.29265056"}, {"d": "2026-09-23", "unixTs": "1790121600", "etfFlow": "4108.51896080"}, {"d": "2026-09-24", "unixTs": "1790208000", "etfFlow": "2259.83805660"}, {"d": "2026-09-25", "unixTs": "1790294400", "etfFlow": "1600.00654957"}, {"d": "2026-09-28", "unixTs": "1790553600", "etfFlow": "371.18296847"}, {"d": "2026-09-29", "unixTs": "1790640000", "etfFlow": "791.15950259"}, {"d": "2026-09-30", "unixTs": "1790726400", "etfFlow": "-1779.14070527"}, {"d": "2026-10-01", "unixTs": "1790812800", "etfFlow": "1211.41002573"}, {"d": "2026-10-02", "unixTs": "1790899200", "etfFlow": "2246.87144762"}, {"d": "2026-10-05", "unixTs": "1791158400", "etfFlow": "-1047.36405706"}, {"d": "2026-10-06", "unixTs": "1791244800", "etfFlow": "1389.09624364"}, {"d": "2026-10-07", "unixTs": "1791331200", "etfFlow": "-5849.38410828"}, {"d": "2026-10-08", "unixTs": "1791417600", "etfFlow": "-2986.59469954"}, {"d": "2026-10-09", "unixTs": "1791504000", "etfFlow": "255.56379566"}, {"d": "2026-10-12", "unixTs": "1791763200", "etfFlow": "-799.46058804"}, {"d": "2026-10-13", "unixTs": "1791849600", "etfFlow": "2113.26671024"}, {"d": "2026-10-14", "unixTs": "1791936000", "etfFlow": "-3207.42036553"}, {"d": "2026-10-15", "unixTs": "1792022400", "etfFlow": "62.10708654"}, {"d": "2026-10-16", "unixTs": "1792108800", "etfFlow": "-1010.56809996"}, {"d": "2026-10-19", "unixTs": "1792368000", "etfFlow": "6429.58475322"}, {"d": "2026-10-20", "unixTs": "1792454400", "etfFlow": "279.85892645"}, {"d": "2026-10-21", "unixTs": "1792540800", "etfFlow": "6277.31776325"}, {"d": "2026-10-22", "unixTs": "1792627200", "etfFlow": "-7822.09363461"}, {"d": "2026-10-23", "unixTs": "1792713600", "etfFlow": "-1704.06414477"}, {"d": "2026-10-26", "unixTs": "1792972800", "etfFlow": "1379.61339087"}, {"d": "2026-10-27", "unixTs": "1793059200", "etfFlow": "2178.20333533"}, {"d": "2026-10-28", "unixTs": "1793145600", "etfFlow": "1690.10746368"}, {"d": "2026-10-29", "unixTs": "1793232000", "etfFlow": "219.96733985"}, {"d": "2026-10-30", "unixTs": "1793318400", "etfFlow": "-8341.37483764"}, {"d": "2026-11-02", "unixTs": "1793577600", "etfFlow": "-5198.17561153"}, {"d": "2026-11-03", "unixTs": "1793664000", "etfFlow": "-1488.62149092"}, {"d": "2026-11-04", "unixTs": "1793750400", "etfFlow": "926.85098714"}, {"d": "2026-11-05", "unixTs": "1793836800", "etfFlow": "-5675.22759660"}], "total": {"d": "2026-11-05", "unixTs": "1793836800", "etfBtcTotal": "663003.15038540"}}/*ENDE*/;   // letzter bekannter ETF-Stand, wird beim Bauen eingesetzt (Ausweichbild, falls die Quelle nicht antwortet)
+const GLD_ALT = /*GLD_ALT*/[{"d":"2026-05-08","oz":33243983.11,"px":4740.99},{"d":"2026-05-11","oz":33317441.71,"px":4728.59},{"d":"2026-05-12","oz":33381717.18,"px":4677.79},{"d":"2026-05-13","oz":33436809.84,"px":4675.04},{"d":"2026-05-14","oz":33436809.84,"px":4682.33},{"d":"2026-05-15","oz":33354173.08,"px":4527.23},{"d":"2026-05-18","oz":33400080.95,"px":4564.49},{"d":"2026-05-19","oz":33335810.82,"px":4495.73},{"d":"2026-05-20","oz":33335810.82,"px":4481.84},{"d":"2026-05-21","oz":33363354.57,"px":4504.19},{"d":"2026-05-22","oz":33271543.08,"px":4505.03},{"d":"2026-05-26","oz":33271543.08,"px":4514.19},{"d":"2026-05-27","oz":33271543.08,"px":4424.64},{"d":"2026-05-28","oz":33198099.14,"px":4418.04},{"d":"2026-05-29","oz":33087933.45,"px":4544.48},{"d":"2026-06-01","oz":33078753.35,"px":4447.68},{"d":"2026-06-02","oz":33051213.22,"px":4502.18},{"d":"2026-06-03","oz":33014493.63,"px":4442.88},{"d":"2026-06-04","oz":32959414.6,"px":4495.18},{"d":"2026-06-05","oz":32791477.75,"px":4364.9},{"d":"2026-06-08","oz":32791477.75,"px":4320.21},{"d":"2026-06-09","oz":32681327.11,"px":4327.21},{"d":"2026-06-10","oz":32589536.27,"px":4170.47},{"d":"2026-06-11","oz":32589536.27,"px":4074.32},{"d":"2026-06-12","oz":32589536.27,"px":4185.37},{"d":"2026-06-15","oz":32543643.04,"px":4354.48},{"d":"2026-06-16","oz":32543643.04,"px":4335.04},{"d":"2026-06-17","oz":32571178.36,"px":4341.04},{"d":"2026-06-18","oz":32809814.06,"px":4235.3},{"d":"2026-06-22","oz":32864881.34,"px":4195.92},{"d":"2026-06-23","oz":32718037.42,"px":4134.42},{"d":"2026-06-24","oz":32580373.73,"px":4023.32},{"d":"2026-06-25","oz":32378469.52,"px":4000.62},{"d":"2026-06-26","oz":32314227.65,"px":4070.82},{"d":"2026-06-29","oz":32314227.65,"px":4025.09},{"d":"2026-06-30","oz":32314227.65,"px":4024.64},{"d":"2026-07-01","oz":32323404.58,"px":4088.0},{"d":"2026-07-02","oz":32194928.64,"px":4127.7},{"d":"2026-07-06","oz":32240810.93,"px":4139.27},{"d":"2026-07-07","oz":32231634.56,"px":4154.07},{"d":"2026-07-08","oz":32231634.56,"px":4064.43},{"d":"2026-07-09","oz":32332572.19,"px":4128.34},{"d":"2026-07-10","oz":32229732.15,"px":4098.7},{"d":"2026-07-13","oz":32229732.15,"px":4039.16},{"d":"2026-07-14","oz":32293961.41,"px":4074.87},{"d":"2026-07-15","oz":32211381.88,"px":4061.52},{"d":"2026-07-16","oz":32211381.88,"px":3992.83},{"d":"2026-07-17","oz":32119629.11,"px":3994.58},{"d":"2026-07-20","oz":32266428.79,"px":4002.66},{"d":"2026-07-21","oz":32339828.02,"px":4051.36},{"d":"2026-07-22","oz":32404052.01,"px":4154.12},{"d":"2026-07-23","oz":32449925.49,"px":4043.88},{"d":"2026-07-24","oz":32449925.49,"px":4066.23},{"d":"2026-07-27","oz":32449925.49,"px":4073.8},{"d":"2026-07-28","oz":32431577.14,"px":4020.95},{"d":"2026-07-29","oz":32449925.26,"px":3999.56},{"d":"2026-07-30","oz":32404055.06,"px":4109.71},{"d":"2026-07-31","oz":32376533.44,"px":4025.22},{"d":"2026-08-03","oz":32339839.14,"px":4026.64},{"d":"2026-08-04","oz":32449921.4,"px":4082.65},{"d":"2026-08-05","oz":32605871.29,"px":4205.01},{"d":"2026-08-06","oz":32624218.24,"px":4266.21},{"d":"2026-08-07","oz":32714816.16,"px":4335.24},{"d":"2026-08-10","oz":32824893.64,"px":4323.99},{"d":"2026-08-11","oz":32879931.86,"px":4382.85},{"d":"2026-08-12","oz":32980834.25,"px":4426.1},{"d":"2026-08-13","oz":32898278.77,"px":4372.4},{"d":"2026-08-14","oz":32907451.51,"px":4390.05},{"d":"2026-08-17","oz":33136762.48,"px":4405.01},{"d":"2026-08-18","oz":32962488.06,"px":4402.66},{"d":"2026-08-19","oz":33265172.64,"px":4459.82},{"d":"2026-08-20","oz":33402755.16,"px":4482.03},{"d":"2026-08-21","oz":33668746.32,"px":4581.13},{"d":"2026-08-24","oz":33742121.07,"px":4662.58},{"d":"2026-08-25","oz":33705434.19,"px":4614.28},{"d":"2026-08-26","oz":33613717.91,"px":4630.28},{"d":"2026-08-27","oz":33650403.89,"px":4567.68},{"d":"2026-08-28","oz":33512833.02,"px":4561.42},{"d":"2026-08-31","oz":33512833.02,"px":4561.27},{"d":"2026-09-01","oz":33650395.71,"px":4351.63},{"d":"2026-09-02","oz":33971372.56,"px":4380.7},{"d":"2026-09-03","oz":33870494.55,"px":4465.55},{"d":"2026-09-04","oz":33824641.61,"px":4413.74},{"d":"2026-09-08","oz":33778790.74,"px":4397.25},{"d":"2026-09-09","oz":33778790.74,"px":4413.0},{"d":"2026-09-10","oz":33767456.92,"px":4364.97},{"d":"2026-09-11","oz":33675758.46,"px":4385.72},{"d":"2026-09-14","oz":33675758.46,"px":4266.43},{"d":"2026-09-15","oz":33767452.63,"px":4295.43},{"d":"2026-09-16","oz":33822468.6,"px":4327.43},{"d":"2026-09-17","oz":33849976.33,"px":4367.29},{"d":"2026-09-18","oz":33987513.34,"px":4347.29},{"d":"2026-09-21","oz":33932500.41,"px":4323.25},{"d":"2026-09-22","oz":33950837.86,"px":4328.5},{"d":"2026-09-23","oz":33978343.66,"px":4283.36},{"d":"2026-09-24","oz":33904995.74,"px":4265.26},{"d":"2026-09-25","oz":33904995.74,"px":4259.86},{"d":"2026-09-28","oz":34042515.83,"px":4143.23},{"d":"2026-09-29","oz":33996676.24,"px":4162.03},{"d":"2026-09-30","oz":33941669.27,"px":4174.88},{"d":"2026-10-01","oz":33969172.4,"px":4150.19},{"d":"2026-10-02","oz":33941669.48,"px":4188.54},{"d":"2026-10-05","oz":33960004.08,"px":4140.0},{"d":"2026-10-06","oz":34079177.78,"px":4154.71},{"d":"2026-10-07","oz":34115845.99,"px":4093.67},{"d":"2026-10-08","oz":33932506.41,"px":4122.77},{"d":"2026-10-09","oz":33859170.91,"px":4184.47},{"d":"2026-10-12","oz":33932503.88,"px":4169.93},{"d":"2026-10-13","oz":33893447.76,"px":4168.91},{"d":"2026-10-14","oz":33893447.76,"px":4088.61},{"d":"2026-10-15","oz":33884281.45,"px":4151.57},{"d":"2026-10-16","oz":34049273.53,"px":4188.47},{"d":"2026-10-19","oz":34030941.72,"px":4146.94},{"d":"2026-10-20","oz":34085936.5,"px":4123.59},{"d":"2026-10-21","oz":34003445.22,"px":4126.44},{"d":"2026-10-22","oz":33618491.91,"px":4047.24},{"d":"2026-10-23","oz":33490175.82,"px":4012.24},{"d":"2026-10-26","oz":33462680.4,"px":4022.51},{"d":"2026-10-27","oz":33490175.59,"px":4056.01},{"d":"2026-10-28","oz":33545165.3,"px":4040.72},{"d":"2026-10-29","oz":33471846.58,"px":4024.97},{"d":"2026-10-30","oz":33490175.88,"px":3911.88},{"d":"2026-11-02","oz":33453518.33,"px":3953.75},{"d":"2026-11-03","oz":33361875.63,"px":3935.1},{"d":"2026-11-04","oz":33453518.23,"px":4036.21},{"d":"2026-11-05","oz":33453518.23,"px":4111.22},{"d":"2026-11-06","oz":33481010.44,"px":4047.93},{"d":"2026-11-09","oz":33517665.76,"px":4115.19},{"d":"2026-11-10","oz":33508502.1,"px":4049.05},{"d":"2026-11-11","oz":33471847.99,"px":4012.1}]/*ENDE*/;   // ebenso für den Gold-ETF GLD (nur abgeleitete Reihe [{d, oz, px}])
+const S = {};   // letzter guter Abruf je Quelle: {v, at}
+const neuer = (a, b, bis) => !a ? b : !b ? a : bis(a) >= bis(b) ? a : b;   // Ausweichstand: den mit dem späteren letzten Datum
+
+// ---------- Rechenhelfer (NaN-fest)
+function sma(a, n) { const o = new Array(a.length).fill(NaN); let s = 0, bad = 0;
+  for (let i = 0; i < a.length; i++) { const v = a[i]; if (isFinite(v)) s += v; else bad++;
+    if (i >= n) { const w = a[i - n]; if (isFinite(w)) s -= w; else bad--; }
+    if (i >= n - 1 && !bad) o[i] = s / n; } return o; }
+function ewm(a, alpha) { let y = NaN; return a.map((v) => { if (isFinite(v)) y = isFinite(y) ? y + alpha * (v - y) : v; return y; }); }
+const std = (a, n) => { const m = sma(a, n), q = sma(a.map((v) => v * v), n); return m.map((v, i) => Math.sqrt(Math.max(0, q[i] - v * v))); };
+
+function compute() {
+  const rows = S.cm.v.filter((r) => r.PriceUSD != null).map((r) => ({d: r.time.slice(0, 10), kurs: +r.PriceUSD, mvrv: num(r.CapMVRVCur),
+    mcap: num(r.CapMrktCurUSD), hash: num(r.HashRate) / 1e6, iss: num(r.IssTotUSD)}));
+  // fehlende Tage bis heute (inkl. laufender Tageskerze = Live-Kurs) aus Binance ergänzen
+  if (S.btc) for (const k of S.btc.v) { const d = day(k[0]); if (d > rows[rows.length - 1].d) rows.push({d, kurs: +k[4], mvrv: NaN, mcap: NaN, hash: NaN, iss: NaN}); }
+  const col = (f) => rows.map((r) => r[f]), set = (f, a) => a.forEach((v, i) => { rows[i][f] = v; });
+  const p = col('kurs');
+  [50, 111, 200, 350].forEach((n) => set('sma' + n, sma(p, n)));
+  set('wma200', sma(p, 1400));
+  set('pi350x2', col('sma350').map((v) => v * 2));
+  const m20 = sma(p, 20), s20 = std(p, 20);
+  set('bb_oben', m20.map((v, i) => v + 2 * s20[i])); set('bb_unten', m20.map((v, i) => v - 2 * s20[i]));
+  const delta = p.map((v, i) => i ? v - p[i - 1] : NaN);
+  const up = ewm(delta.map((v) => Math.max(v, 0)), 1 / 14), dn = ewm(delta.map((v) => Math.max(-v, 0)), 1 / 14);
+  set('rsi', up.map((v, i) => 100 - 100 / (1 + v / dn[i])));
+  const e12 = ewm(p, 2 / 13), e26 = ewm(p, 2 / 27), macd = e12.map((v, i) => v - e26[i]), sig = ewm(macd, 2 / 10);
+  set('macd', macd); set('macd_signal', sig); set('macd_hist', macd.map((v, i) => v - sig[i]));
+  set('vola', std(p.map((v, i) => i ? Math.log(v / p[i - 1]) : NaN), 30).map((v) => v * Math.sqrt(30 / 29) * Math.sqrt(365) * 100));
+  let ath = 0, athD = ''; rows.forEach((r) => { if (r.kurs > ath) { ath = r.kurs; athD = r.d; } r.dd = (r.kurs / ath - 1) * 100; });
+  let n = 0, s = 0, ss = 0;   // laufende Standardabweichung der Marktkapitalisierung für den Z-Score
+  rows.forEach((r) => { if (isFinite(r.mcap)) { n++; s += r.mcap; ss += r.mcap * r.mcap; }
+    r.realpreis = r.kurs / r.mvrv; r.mvrv_z = (r.mcap - r.mcap / r.mvrv) / Math.sqrt(Math.max(0, ss / n - (s / n) ** 2)); });
+  set('hash30', sma(col('hash'), 30)); set('hash60', sma(col('hash'), 60));
+  const iss365 = sma(col('iss'), 365); rows.forEach((r, i) => { r.puell = r.iss / iss365[i]; });
+  const byDay = Object.fromEntries(rows.map((r) => [r.d, r]));
+  // Bitcoin-Gold-Dominanz: Anteil der Bitcoin-Marktkapitalisierung am Wert von Bitcoin und Gold zusammen
+  let supply = NaN;
+  rows.forEach((r) => { if (isFinite(r.mcap) && r.kurs) supply = r.mcap / r.kurs; r.supply = supply; });
+  if (S.gold) for (const k of S.gold.v) { const r = byDay[day(k[0])]; if (r) r.gold = +k[4]; }
+  rows.forEach((r) => { if (isFinite(r.gold) && isFinite(r.supply)) { const b = r.kurs * r.supply, g = r.gold * GOLD_OZ; r.btcgold = b / g * 100; r.gcap = g; r.unzen = r.kurs / r.gold; } });
+  set('unzen200', sma(col('unzen'), 200)); set('unzen50', sma(col('unzen'), 50));
+  if (S.eth) for (const k of S.eth.v) { const r = byDay[day(k[0])]; if (r) r.ethbtc = +k[4]; }
+  if (S.fng) for (const x of S.fng.v.data) { const r = byDay[day(x.timestamp * 1000)]; if (r) r.fng = +x.value; }
+  if (S.funding) { const g = {}; for (const x of S.funding.v) (g[day(x.fundingTime)] ||= []).push(x.fundingRate * 100);
+    for (const d in g) if (byDay[d]) byDay[d].funding = d3.mean(g[d]); }
+  rows.forEach((r) => { r.t = new Date(r.d + 'T00:00:00Z'); });
+
+  const L = rows[rows.length - 1], P = rows[rows.length - 2];
+  const lf = (f, back = 0) => { let c = 0; for (let i = rows.length - 1; i >= 0; i--) if (isFinite(rows[i][f]) && c++ === back) return rows[i][f]; return NaN; };
+  const B = 'bullisch', N = 'neutral', X = 'bärisch', K = 'Kontext', ind = [];
+  const add = (id, gruppe, name, wert, anzeige, signal, regel) => { if (isFinite(wert)) ind.push({id, gruppe, name, wert, anzeige, signal, regel}); };
+  const zone = (v, lo, hi) => v < lo ? B : v > hi ? X : N;
+
+  add('kurs', 'Kurs', 'Bitcoin-Kurs (live)', L.kurs, usd(L.kurs), K, pct((L.kurs / P.kurs - 1) * 100) + ' zum Vortagesschluss');
+  add('ath', 'Kurs', 'Abstand zum Allzeithoch', L.dd, pct(L.dd), K, `Allzeithoch ${usd(ath)} am ${athD.split('-').reverse().join('.')}`);
+  add('vola', 'Kurs', 'Schwankung (30 Tage, aufs Jahr gerechnet)', L.vola, de(L.vola) + ' %', K, 'Hohe Werte = große Tagesausschläge, kleinere Positionen wählen');
+  const a200 = (L.kurs / L.sma200 - 1) * 100;
+  const mayer = L.kurs / L.sma200;
+  add('sma200', 'Trend', 'Kurs zum 200-Tage-Durchschnitt', a200, pct(a200), a200 > 0 ? B : X, `Darüber = Aufwärtstrend, darunter = Abwärtstrend (Linie bei ${usd(L.sma200)}). Mayer-Multiple ${de(mayer, 2)}: unter 0,8 günstig, über 2,4 überhitzt`);
+  add('kreuz', 'Trend', '50-Tage- zu 200-Tage-Durchschnitt', L.sma50 / L.sma200, L.sma50 > L.sma200 ? 'Golden Cross' : 'Death Cross', L.sma50 > L.sma200 ? B : X, '50er über 200er = Golden Cross (bullisch), darunter = Death Cross (bärisch)');
+  add('macd', 'Trend', 'MACD (12/26/9) Histogramm', L.macd_hist, de(L.macd_hist), L.macd_hist > 0 ? B : X, 'Über 0 = Schwung nach oben, unter 0 = Schwung nach unten');
+  const w = L.kurs / L.wma200;
+  add('wma200', 'Trend', 'Kurs zum 200-Wochen-Durchschnitt', w, de(w, 2) + '×', zone(w, 1, 4), `Unter 1 = historische Kaufzone, über 4 = überhitzt (Linie bei ${usd(L.wma200)})`);
+  add('rsi', 'Schwung', 'RSI (14 Tage)', L.rsi, de(L.rsi), zone(L.rsi, 30, 70), 'Unter 30 = überverkauft, über 70 = überkauft');
+  const mv = lf('mvrv'), z = lf('mvrv_z'), nupl = 1 - 1 / mv, rp = lf('realpreis'), pu = lf('puell');
+  add('mvrvz', 'Bewertung', 'MVRV-Z-Score', z, de(z, 2), zone(z, 0, 7), `Unter 0 = Boden-Zone, über 7 = Top-Zone. MVRV ${de(mv, 2)}, NUPL ${de(nupl, 2)} (unter 0 = Kapitulation, über 0,75 = Euphorie)`);
+  add('realpreis', 'Bewertung', 'Realisierter Preis (Ø Einstandskurs aller Coins)', rp, usd(rp), K, 'Kurs darunter = die Mehrheit der Halter sitzt im Minus');
+  const pi = L.sma111 / L.pi350x2;
+  add('pi', 'Bewertung', 'Pi-Cycle-Top (111-Tage ÷ 2 × 350-Tage)', pi, de(pi, 2), pi >= 1 ? X : N, 'Ab 1,00 kreuzen die Linien = historisches Top-Signal');
+  add('puell', 'Bewertung', 'Puell-Multiple (Miner-Einnahmen ÷ Jahresschnitt)', pu, de(pu, 2), zone(pu, 0.5, 4), 'Unter 0,5 = Miner unter Druck (Boden-Zone), über 4 = Top-Zone');
+  const fg = lf('fng');
+  add('fng', 'Stimmung', 'Fear & Greed Index', fg, fg + ' von 100', zone(fg, 25, 75), 'Gegenanzeige: unter 25 = extreme Angst (oft Kaufzone), über 75 = extreme Gier');
+  const f7 = d3.mean(d3.range(7).map((i) => lf('funding', i)));
+  add('funding', 'Derivate', `Funding Rate (${quelle('funding')}, 7-Tage-Schnitt je 8 Std.)`, f7, de(f7, 4) + ' %', f7 < 0 ? B : f7 > 0.03 ? X : N, 'Negativ = Shorts zahlen (oft Boden-Nähe), über 0,03 % = überhitzte Longs');
+  if (S.oi && S.oi.v.length) { const a = +S.oi.v[S.oi.v.length - 1].sumOpenInterestValue, b = +S.oi.v[0].sumOpenInterestValue;
+    add('oi', 'Derivate', `Open Interest BTCUSDT-Futures (${quelle('oi')})`, a, de(a / 1e9, 2) + ' Mrd. $', K, pct((a / b - 1) * 100) + ' in 30 Tagen; steigt es stark bei steigendem Kurs, wächst das Hebel-Risiko'); }
+  if (S.ls && S.ls.v.length) { const v = +S.ls.v[S.ls.v.length - 1].longShortRatio;
+    add('ls', 'Derivate', `Long/Short-Verhältnis der Konten (${quelle('ls')})`, v, de(v, 2), K, 'Viele Kleinanleger long = Risiko von Long-Liquidationen'); }
+  const hr = lf('hash30') / lf('hash60');
+  add('hash', 'Netzwerk', 'Hash-Ribbon (Hashrate 30 Tage ÷ 60 Tage)', hr, de(hr, 3), hr > 1 ? B : X, `Über 1 = Miner bauen aus, unter 1 = Miner-Kapitulation (aktuell ${de(lf('hash30'))} EH/s)`);
+  if (S.boerse && S.boerse.v.length >= 7) { const b = S.boerse.v, n7 = d3.sum(b.slice(-7), (r) => r.netto), Lb = b[b.length - 1];
+    add('boerse', 'Netzwerk', 'Börsen-Nettofluss (7 Tage)', n7, (n7 > 0 ? '+' : '') + de(n7) + ' BTC', n7 < 0 ? B : n7 > 5000 ? X : N,
+      `Börsenbestand ${de(Lb.bestand)} BTC (bis ${Lb.d.split('-').reverse().join('.')}). Abfluss = Coins gehen in eigene Wallets (bullisch), Zufluss über 5.000 BTC = Verkaufsbereitschaft`); }
+  const halv = Math.floor((L.t - Date.UTC(2024, 3, 20)) / 864e5);
+  if (S.stable && S.stable.v.length > 31) { const a = S.stable.v, Ls = a[a.length - 1], A = d3.greatest(a.filter((x) => x.t <= Ls.t - 30 * 864e5), (x) => x.t);
+    const g = A ? (Ls.usd / A.usd - 1) * 100 : NaN;
+    add('stablecoin', 'Liquidität', 'Stablecoin-Marktkapitalisierung (Wachstum 30 Tage)', g, pct(g), g > 2 ? B : g < 0 ? X : N, `${de(Ls.usd / 1e9)} Mrd. $ im Umlauf. Über +2 % = neues Geld wartet auf Einsatz, unter 0 % = Geld fließt ab`); }
+  if (S.cb) { const ref = isFinite(S.cb.v.ref) ? S.cb.v.ref : L.kurs, pr = (S.cb.v.px / ref - 1) * 100;
+    add('cbprem', 'Stimmung', 'Coinbase-Premium', pr, pct(pr, 3), pr > 0.05 ? B : pr < -0.05 ? X : N, `Coinbase ${usd(S.cb.v.px)} gegen ${usd(ref)} (USDT). Über +0,05 % = US-Nachfrage, unter −0,05 % = US-Verkaufsdruck; USD und USDT weichen leicht ab`); }
+  if (S.dvol && S.dvol.v.length > 30) { const a = S.dvol.v.slice(-365), v = a[a.length - 1], q = a.filter((x) => x < v).length / a.length * 100;
+    add('dvol', 'Derivate', 'DVOL (implizite Volatilität, Deribit)', v, de(v, 1), K, `Höher als an ${de(q)} % der Tage im letzten Jahr: ${q < 20 ? 'sehr ruhig – Ausbruch möglich' : q > 80 ? 'Panik/Angst' : 'normal'}`); }
+  add('halving', 'Zyklus', 'Tage seit dem Halving (20.04.2024)', halv, de(halv), K, 'Frühere Zyklus-Hochs lagen rund 520–550 Tage nach dem Halving, Tiefs etwa ein Jahr später');
+  if (S.glob) { const g = S.glob.v.data, dom = g.market_cap_percentage.btc, tot = g.total_market_cap.usd;
+    add('dominanz', 'Gesamtmarkt', 'Bitcoin-Dominanz', dom, de(dom, 1) + ' %', K, 'Steigt = Geld fließt zu Bitcoin; fällt = Altcoins laufen besser');
+    add('gesamt', 'Gesamtmarkt', 'Krypto-Marktkapitalisierung gesamt', tot, de(tot / 1e12, 2) + ' Bio. $', K, pct(g.market_cap_change_percentage_24h_usd) + ' in 24 Stunden'); }
+  const eb = lf('ethbtc'), eb30 = lf('ethbtc', 30);
+  add('ethbtc', 'Gesamtmarkt', 'ETH/BTC-Verhältnis', eb, de(eb, 4), K, pct((eb / eb30 - 1) * 100) + ' in 30 Tagen; steigt es, sind Altcoins stärker als Bitcoin');
+  console.assert(L.rsi >= 0 && L.rsi <= 100 && mv > 0 && L.sma200 > 0, 'Indikatoren außerhalb des plausiblen Bereichs');
+
+  const skip = new Set(['usdt', 'usdc', 'dai', 'usds', 'usde', 'fdusd', 'pyusd', 'usd1', 'tusd', 'usdd', 'bsc-usd', 'susde', 'susds', 'buidl', 'usdf', 'rlusd', 'usdtb',
+    'steth', 'wsteth', 'wbtc', 'weth', 'weeth', 'cbbtc', 'wbeth', 'lbtc', 'reth', 'figr_heloc']);
+  const coins = (S.coins ? S.coins.v : []).filter((c) => !skip.has(c.symbol)).slice(0, 12).map((c) => ({
+    coin: `${c.name} (${c.symbol.toUpperCase()})`, kurs: usd(c.current_price, c.current_price > 1000 ? 0 : c.current_price > 1 ? 2 : 4),
+    d24: pct(c.price_change_percentage_24h_in_currency || 0), d7: pct(c.price_change_percentage_7d_in_currency || 0),
+    d30: pct(c.price_change_percentage_30d_in_currency || 0), mcap: de(c.market_cap / 1e9, 1) + ' Mrd. $'}));
+  // Open Interest: Verlauf (4-Stunden-Schritte, 30 Tage) und Lesart aus 24-Stunden-Veränderung von OI und Kurs
+  const oi = (S.oi ? S.oi.v : []).map((r) => ({t: new Date(r.timestamp), oi: r.sumOpenInterestValue / 1e9, btc: +r.sumOpenInterest, px: r.sumOpenInterestValue / r.sumOpenInterest}));
+  let oiNote = 'Open-Interest-Daten sind gerade nicht erreichbar.';
+  if (oi.length > 7) { const a = oi[oi.length - 1], b = oi[oi.length - 7], dO = (a.btc / b.btc - 1) * 100, dP = (a.px / b.px - 1) * 100;
+    const les = Math.abs(dO) < 1 ? 'kaum Bewegung beim Hebel, der Markt wartet ab.'
+      : dO > 0 && dP >= 0 ? 'neues Geld mit Hebel treibt den Anstieg. Das stützt den Trend, macht ihn aber anfälliger für plötzliche Rücksetzer.'
+      : dO > 0 ? 'es werden neue Positionen in den fallenden Kurs hinein eröffnet, meist Shorts. Das erhöht den Druck, kann aber in einem Short-Squeeze enden.'
+      : dP >= 0 ? 'der Kurs steigt, während Positionen geschlossen werden. Das spricht für eingedeckte Shorts, weniger für frische Käufer.'
+      : 'Positionen werden im fallenden Kurs geschlossen. Longs geben auf oder werden liquidiert, der Hebel wird abgebaut.';
+    oiNote = `Aktuell ${de(a.oi, 2)} Mrd. $ (${de(a.btc)} BTC) in offenen Futures. In 24 Stunden: Open Interest ${pct(dO)}, Kurs ${pct(dP)}. Lesart: ${les}`; }
+  const intra = (S.intra ? S.intra.v : []).map((k) => ({t: new Date(k[0]), kurs: +k[4]}));
+  const etf = (S.etf ? S.etf.v.flow : []).map((r) => ({t: new Date(r.d + 'T00:00:00Z'), d: r.d, btc: +r.etfFlow, usd: byDay[r.d] ? r.etfFlow * byDay[r.d].kurs / 1e6 : NaN})).filter((r) => isFinite(r.btc));
+  const etfTotal = S.etf && S.etf.v.total ? +S.etf.v.total.etfBtcTotal : NaN;
+  const rot = rotation(rows, etf, S.gld ? S.gld.v.reihe : []), nb = rot.stimmen.filter((s) => s[1]).length;
+  add('rotation', 'Gesamtmarkt', 'Kapital-Rotation Bitcoin vs. Gold', rot.stimmen.length ? nb : NaN, rot.kurz, K, `${nb} von ${rot.stimmen.length} Signalen sprechen für Bitcoin (ETF-Geld 90 Tage, Trend in Unzen Gold, Rendite 90 Tage)`);
+  return {rows, ind, coins, oi, oiNote, intra, etf, etfTotal, rot, prevClose: P.kurs, chg: (L.kurs / P.kurs - 1) * 100};
+}
+
+// ---------- kleine Grafiken: Tacho, Mini-Verlauf, Zonen-Balken
+function gauge(v) {
+  const box = $('gauge'); box.replaceChildren(); box.parentElement.hidden = !isFinite(v); if (!isFinite(v)) return;
+  const W = 230, R = 92, a = d3.scaleLinear([0, 100], [-Math.PI / 2, Math.PI / 2]);
+  const svg = d3.select(box).append('svg').attr('viewBox', `0 0 ${W} 130`).attr('width', W).attr('role', 'img').attr('aria-label', `Fear & Greed Index: ${v} von 100`);
+  const g = svg.append('g').attr('transform', `translate(${W / 2},${R + 10})`), arc = d3.arc().innerRadius(R - 13).outerRadius(R).cornerRadius(7);
+  g.append('path').attr('d', arc({startAngle: -Math.PI / 2, endAngle: Math.PI / 2})).style('fill', 'var(--line)');
+  g.append('path').attr('d', arc({startAngle: -Math.PI / 2, endAngle: a(v)})).style('fill', 'var(--c0)');
+  g.append('text').attr('class', 'g-v').attr('text-anchor', 'middle').attr('y', -22).text(v);
+  g.append('text').attr('class', 'g-l').attr('text-anchor', 'middle').attr('y', -2).text(v < 25 ? 'Extreme Angst' : v < 45 ? 'Angst' : v < 55 ? 'Neutral' : v < 75 ? 'Gier' : 'Extreme Gier');
+  g.append('text').attr('class', 'g-e').attr('text-anchor', 'middle').attr('x', -R + 7).attr('y', 18).text('Angst');
+  g.append('text').attr('class', 'g-e').attr('text-anchor', 'middle').attr('x', R - 7).attr('y', 18).text('Gier');
+}
+function spark(field) {
+  const a = D.rows.slice(-90).map((r) => r[field]).filter(Number.isFinite); if (a.length < 2) return null;
+  const W = 160, H = 34, x = d3.scaleLinear([0, a.length - 1], [1, W - 1]), y = d3.scaleLinear(d3.extent(a), [H - 3, 3]);
+  const svg = d3.create('svg').attr('class', 'spark').attr('viewBox', `0 0 ${W} ${H}`).attr('preserveAspectRatio', 'none').attr('aria-hidden', 'true');
+  svg.append('path').attr('d', d3.area().x((d, i) => x(i)).y0(H).y1((d) => y(d))(a)).style('fill', 'var(--c0)').style('opacity', 0.14);
+  svg.append('path').attr('d', d3.line().x((d, i) => x(i)).y((d) => y(d))(a)).style('fill', 'none').style('stroke', 'var(--c0)').style('stroke-width', 1.6).attr('vector-effect', 'non-scaling-stroke');
+  return svg.node();
+}
+function track(v, t) {   // grün = bullische Zone, rot = bärische Zone, Strich = aktueller Wert
+  const box = el('div', 'track'), p = (q) => Math.max(0, Math.min(100, (q - t.min) / (t.max - t.min) * 100));
+  [['z-ok', p(t.lo)], ['z-mid', p(t.hi) - p(t.lo)], ['z-bad', 100 - p(t.hi)]].forEach(([c, w]) => { const s = el('span', c); s.style.width = w + '%'; box.append(s); });
+  const m = el('i', 'mark'); m.style.left = p(v) + '%'; box.append(m); return box;
+}
+
+// ---------- Anzeige
+let D = null, win = 365;
+const f0 = (v) => de(v), f2 = (v) => de(v, 2), f4 = (v) => de(v, 4);
+const CHARTS = [
+  {id: 'live', wide: 1, local: 1, rows: () => D.intra, xfmt: '%H:%M', tfmt: '%d.%m. %H:%M Uhr', area: 'kurs', title: 'Bitcoin live: die letzten 24 Stunden', sub: 'Kursverlauf in 5-Minuten-Schritten, deine Ortszeit. Wird alle 15 Sekunden neu gezeichnet.', fmt: usd, lines: [{f: 'kurs', c: 0, w: 2, l: 'Kurs'}]},
+  {id: 'kurs', area: 'kurs', wide: 1, title: 'Kurs mit gleitenden Durchschnitten und Bollinger-Band', sub: 'Trend: Liegt der Kurs über der 200-Tage-Linie, gilt der Aufwärtstrend als intakt. Die 200-Wochen-Linie war in früheren Bärenmärkten die Boden-Zone. Das Bollinger-Band zeigt, wie weit der Kurs vom 20-Tage-Schnitt abweicht.',
+    fmt: usd, band: ['bb_unten', 'bb_oben'], lines: [{f: 'wma200', c: 3, l: '200-Wochen-Linie'}, {f: 'sma200', c: 2, l: '200-Tage-Linie'}, {f: 'sma50', c: 1, l: '50-Tage-Linie'}, {f: 'kurs', c: 0, w: 2, l: 'Kurs'}]},
+  {id: 'rsi', area: 'rsi', title: 'RSI (14 Tage)', sub: 'Schwung: misst, wie stark die letzten Anstiege gegenüber den Rückgängen waren. Unter 30 überverkauft, über 70 überkauft.', fmt: f0, dom: [0, 100], refs: [30, 70], lines: [{f: 'rsi', c: 0, l: 'RSI'}]},
+  {id: 'macd', title: 'MACD (12/26/9)', sub: 'Trendwechsel: Kreuzt die MACD-Linie ihre Signallinie nach oben (grüne Balken), dreht der Schwung ins Positive.', fmt: f0, bars: 'macd_hist', barL: 'Histogramm', lines: [{f: 'macd_signal', c: 1, l: 'Signallinie'}, {f: 'macd', c: 0, l: 'MACD'}]},
+  {id: 'mvrv', area: 'mvrv', title: 'MVRV', sub: 'Bewertung auf der Blockchain: Marktwert geteilt durch den Wert aller Coins zu ihrem letzten Bewegungspreis. Unter 1 sitzt der Markt im Schnitt im Verlust, über 3,5 lagen frühere Hochs.', fmt: f2, refs: [1, 3.5], lines: [{f: 'mvrv', c: 0, l: 'MVRV'}]},
+  {id: 'pi', title: 'Pi-Cycle-Top', sub: 'Zyklus: Kreuzt die 111-Tage-Linie das Doppelte der 350-Tage-Linie nach oben, war das früher ein Signal für ein Zyklus-Hoch.', fmt: usd, lines: [{f: 'kurs', c: 3, w: 1.2, l: 'Kurs'}, {f: 'pi350x2', c: 1, l: '2 × 350-Tage-Linie'}, {f: 'sma111', c: 0, l: '111-Tage-Linie'}]},
+  {id: 'fng', area: 'fng', title: 'Fear & Greed Index', sub: 'Stimmung von 0 (extreme Angst) bis 100 (extreme Gier). Gilt als Gegenanzeige: Unter 25 war oft Kaufzone, über 75 Warnzone.', fmt: f0, dom: [0, 100], refs: [25, 75], lines: [{f: 'fng', c: 0, l: 'Fear & Greed'}]},
+  {id: 'funding', title: 'Funding Rate (BTCUSDT)', sub: 'Derivate: Gebühr, die Long- an Short-Händler zahlen, in Prozent je 8 Stunden (Tagesmittel). Hohe positive Werte heißen überhebelte Longs, negative Werte kommen oft nahe an Tiefs vor.', fmt: (v) => de(v, 3) + ' %', bars: 'funding', barL: 'Funding'},
+  {id: 'oi', wide: 1, note: (e) => { e.textContent = D.oiNote; }, rows: () => D.oi, xfmt: '%d.%m.', title: 'Open Interest (BTCUSDT-Futures, 30 Tage)', sub: 'Derivate: Wert aller offenen Futures-Positionen. Steigt er, kommt mehr gehebeltes Geld in den Markt; fällt er, wird Hebel abgebaut. Die Zahl hier ist in Bitcoin gerechnet, damit der Kurs sie nicht verzerrt.',
+    fmt: (v) => de(v) + ' BTC', area: 'btc', lines: [{f: 'btc', c: 0, l: 'Open Interest'}]},
+  {id: 'ethbtc', cls: 'links1', area: 'ethbtc', title: 'ETH/BTC-Verhältnis', sub: 'Altcoin-Stärke: Steigt die Linie, läuft Ethereum (und meist der Altcoin-Markt) besser als Bitcoin.', fmt: f4, lines: [{f: 'ethbtc', c: 0, l: 'ETH/BTC'}]},
+  {id: 'hash', cls: 'links1', area: 'hash', title: 'Hashrate', sub: 'Netzwerk: Rechenleistung der Miner in Exahash pro Sekunde. Fällt sie deutlich, geben Miner auf, was oft am Ende von Abverkäufen passiert.', fmt: (v) => de(v) + ' EH/s', lines: [{f: 'hash', c: 0, l: 'Hashrate'}]},
+  {id: 'etf', cls: 'etf-gross', note: etfHead, rows: () => D.etf.filter((x) => isFinite(x.usd)).slice(-60), xfmt: '%d.%m.', tfmt: '%d.%m.%Y', title: 'Bitcoin-ETFs (BlackRock & Co.): Geld rein, Geld raus', sub: 'Institutionelle Nachfrage in US-Dollar: wie viel Geld netto in die US-Bitcoin-ETFs geflossen ist (grün) oder abgezogen wurde (rot). BlackRocks IBIT ist der größte dieser Fonds.',
+    fmt: (v) => mUsd(v, false), bars: 'usd', barL: 'Netto-Fluss'},
+  {id: 'rotation', wide: 1, area: 'unzen', note: rotHead, title: 'Bitcoin vs. Gold: wohin fließt das Geld?', sub: 'Kapital-Rotation: Schichten große Anleger zwischen Bitcoin und Gold um? Drei Signale: Geldflüsse in die ETFs, der Trend von Bitcoin in Unzen Gold und wer zuletzt mehr Rendite gebracht hat. Linie über dem 200-Tage-Durchschnitt = Bitcoin stärker als Gold.',
+    fmt: (v) => de(v, 1), lines: [{f: 'unzen200', c: 1, l: '200-Tage-Durchschnitt'}, {f: 'unzen', c: 0, w: 2, l: '1 BTC in Unzen Gold'}]},
+];
+// Kopf des ETF-Kastens: alles in US-Dollar, Zuflüsse und Abflüsse getrennt summiert
+const mK = (v) => (v > 0 ? '+' : '') + (Math.abs(v) >= 1000 ? de(v / 1000, 1) + ' Mrd.' : de(v) + ' Mio.');   // kompakt für die schmale Tabelle
+const mUsd = (v, sign = true) => (sign && v > 0 ? '+' : '') + (Math.abs(v) >= 1000 ? de(v / 1000, 2) + ' Mrd. $' : de(v) + ' Mio. $');
+function zweiSpaltig(e, ab) {   // breite Karten: Fazit links, Kennzahl-Kästen (ab Element „ab“) rechts; schmal untereinander
+  const k = [...e.children], i = k.indexOf(ab), li = el('div'), re = el('div'), g = el('div', 'kopf2');
+  li.append(...k.slice(0, i)); re.append(...k.slice(i)); g.append(li, re); e.replaceChildren(g); e.style.maxWidth = 'none';   // .lead begrenzt sonst auf 75ch
+}
+
+// ---------- Kapital-Rotation Bitcoin vs. Gold
+// Netto-Fluss in Mio. $ im Fenster (von, bis]: Bitcoin-ETFs = Summe der Tageswerte, Gold-ETF = Σ (Unzen-Änderung × Goldpreis des Tages)
+const flussBtc = (r, von, bis) => d3.sum(r.filter((x) => x.d > von && x.d <= bis), (x) => x.usd);
+function flussGold(g, von, bis) { let s = 0; for (let i = 1; i < g.length; i++) if (g[i].d > von && g[i].d <= bis) s += (g[i].oz - g[i - 1].oz) * g[i].px; return s / 1e6; }
+{ const t = [{d: '2026-01-01', oz: 100, px: 1e6}, {d: '2026-01-02', oz: 110, px: 2e6}, {d: '2026-01-03', oz: 105, px: 3e6}];   // Selbsttest: +10 × 2 Mio. − 5 × 3 Mio. = +5 Mio.
+  console.assert(flussGold(t, '2026-01-01', '2026-01-03') === 5 && flussGold(t, '2026-01-02', '2026-01-03') === -15 && flussBtc([{d: '2026-01-02', usd: 7}], '2026-01-01', '2026-01-02') === 7, 'Flussberechnung falsch'); }
+function rotation(rows, etf, gld) {
+  const e = etf.filter((x) => isFinite(x.usd)), u = rows.filter((x) => isFinite(x.unzen)), o = {stimmen: []};
+  const vor = (d, n) => day(Date.parse(d) - n * 864e5);
+  if (e.length && gld.length > 1) {   // A: beide Reihen bis zum selben Tag vergleichen (BTC-ETF-Daten hängen einige Tage nach)
+    const bis = d3.min([e[e.length - 1].d, gld[gld.length - 1].d]);
+    Object.assign(o, {bis, etfD: e[e.length - 1].d, gldD: gld[gld.length - 1].d, oz: gld[gld.length - 1].oz, px: gld[gld.length - 1].px,
+      b30: flussBtc(e, vor(bis, 30), bis), g30: flussGold(gld, vor(bis, 30), bis), b90: flussBtc(e, vor(bis, 90), bis), g90: flussGold(gld, vor(bis, 90), bis)});
+    o.stimmen.push(['ETF-Geld', o.b90 > o.g90]); }
+  const L = u[u.length - 1];
+  if (L && isFinite(L.unzen200)) o.stimmen.push(['Trend', L.unzen > L.unzen200]);   // B
+  const ab = (n) => { const d0 = L && vor(L.d, n), M = L && u[0].d <= d0 && u.find((x) => x.d >= d0);   // C: Rendite Bitcoin minus Gold
+    return M ? {b: (L.kurs / M.kurs - 1) * 100, g: (L.gold / M.gold - 1) * 100} : null; };
+  Object.assign(o, {L, r30: ab(30), r90: ab(90)});
+  if (o.r90) o.stimmen.push(['Rendite', o.r90.b > o.r90.g]);
+  const n = o.stimmen.length, nb = o.stimmen.filter((s) => s[1]).length;
+  o.ziel = nb * 2 > n ? 'Bitcoin' : 'Gold';
+  const klar = n === 3 && (nb === 3 || nb === 0), echt = Math.sign(o.b90) !== Math.sign(o.g90);   // echte Rotation nur, wenn ein ETF-Fluss raus- und der andere reingeht
+  o.fazit = !n ? 'Keine Daten' : nb * 2 === n ? 'Kein klares Bild' : klar && echt ? 'Klare Rotation Richtung ' + o.ziel : klar ? o.ziel + ' vorn (kein echtes Umschichten)' : 'Leichte Tendenz Richtung ' + o.ziel;
+  o.kurz = !n || nb * 2 === n ? 'Unentschieden' : 'Richtung ' + o.ziel;
+  return o;
+}
+function rotHead(e) {
+  e.replaceChildren();
+  const R = D.rot, dt = (d) => d.split('-').reverse().join('.'), pp = (v) => pct(v, 1).replace(' %', ' Pkt.');   // kurz: lange Einheit bricht in den Kacheln um
+  const fz = el('div', 'etf-big', R.fazit); if (R.stimmen.length && R.fazit !== 'Kein klares Bild') fz.style.color = R.ziel === 'Bitcoin' ? 'var(--c0)' : 'var(--c1)';
+  e.append(el('div', 't-l', 'Fazit aus drei Signalen'), fz,
+    el('div', 't-r', R.stimmen.map(([n, b]) => `${n} → ${b ? 'Bitcoin' : 'Gold'}`).join(' · ') + (R.stimmen.length < 3 ? ' (nicht alle Signale verfügbar)' : '')));
+  if (R.L && isFinite(R.L.btcgold)) e.append(el('div', 't-r', `Bitcoin ist ${de(R.L.btcgold, 1)} % so viel wert wie alles Gold der Welt (Gleichstand bei ${usd(R.L.gcap / R.L.supply)} je BTC).`));
+  // A: Geldflüsse der ETFs
+  if (isFinite(R.b90)) {
+    const tb = el('tbody'), t = el('table', 'etf-tab'), th = el('tr'), thead = el('thead'), cl = (v) => 'num ' + (v >= 0 ? 'up' : 'down');
+    ['Netto in US-Dollar', 'Bitcoin-ETFs', 'Gold (GLD, größter Gold-ETF)'].forEach((x, i) => { const c = el('th', i ? 'num' : '', x); if (i === 2) c.style.whiteSpace = 'normal'; th.append(c); });
+    [['30 Tage', R.b30, R.g30], ['90 Tage', R.b90, R.g90]].forEach(([n, b, g]) => { const tr = el('tr'); tr.append(el('td', '', n), el('td', cl(b), mK(b)), el('td', cl(g), mK(g))); tb.append(tr); });
+    thead.append(th); t.append(thead, tb); const sc = el('div', 'scroll'); sc.append(t); e.append(sc);
+    // Anteil Bitcoin am Geldstrom: 50 % = gleich viel, 100 % = alles zu Bitcoin (bzw. Gold verliert), 0 % = umgekehrt
+    const q = (1 + (R.b90 - R.g90) / (Math.abs(R.b90) + Math.abs(R.g90) || 1)) / 2 * 100;
+    const bar = el('div', 'ls-bar etf-bar'), a = el('div', '', `Bitcoin ${de(q)} %`), b = el('div', 'ls-short', `Gold ${de(100 - q)} %`);
+    a.style.width = q + '%'; b.style.width = (100 - q) + '%'; a.style.background = 'color-mix(in srgb, var(--c0) 65%, #000)'; b.style.background = 'color-mix(in srgb, var(--c1) 65%, #000)'; bar.append(a, b);
+    e.append(el('div', 't-l', 'Rotationsanteil (90 Tage): wohin der Geldstrom eher geht'), bar);
+    const gleich = Math.sign(R.b90) === Math.sign(R.g90);
+    e.append(el('div', 't-r', (gleich ? `Kein echtes Umschichten: beide ${R.b90 > 0 ? 'bekommen Geld' : 'verlieren Geld'}, nur unterschiedlich viel. ` : '') +
+      `Verglichen bis ${dt(R.bis)} (Bitcoin-ETFs gemeldet bis ${dt(R.etfD)}, GLD bis ${dt(R.gldD)}${S.gld && S.gld.v.alt ? ', gespeicherter Stand' : ''}). GLD hält ${de(R.oz / 1e6, 1)} Mio. Unzen Gold, Goldpreis ${usd(R.px)} je Unze (GLD-Schlusskurs ${dt(R.gldD).slice(0, 6)}).`));
+  } else e.append(el('div', 't-r', 'ETF-Geldflüsse: nicht verfügbar (Gold-ETF- oder Bitcoin-ETF-Daten gerade nicht erreichbar).'));
+  // B und C als Kacheln
+  const mc = el('div', 'mc'), box = (t, v, s, c) => { const b = el('div'), w = el('div', 't-v' + (c ? ' ' + c : ''), v); b.append(el('div', 't-l', t), w, el('div', 't-r', s)); mc.append(b); };
+  const L = R.L;
+  if (L && isFinite(L.unzen200)) { const ab = (L.unzen / L.unzen200 - 1) * 100;
+    box('Trend: 1 BTC in Unzen Gold', de(L.unzen, 1), `${pct(ab)} zum 200-Tage-Schnitt (${de(L.unzen200, 1)})${isFinite(L.unzen50) ? ', 50-Tage-Schnitt ' + de(L.unzen50, 1) : ''}. ${ab > 0 ? 'Darüber: Bitcoin stärker als Gold.' : 'Darunter: Gold stärker als Bitcoin.'}`, ab > 0 ? 'up' : 'down'); }
+  else box('Trend: 1 BTC in Unzen Gold', '–', 'Zu wenig Gold-Kursdaten für den 200-Tage-Schnitt.');
+  [[90, R.r90], [30, R.r30]].forEach(([n, r]) => r ? box(`Wer lief besser? (${n} Tage)`, pp(r.b - r.g), `Bitcoin ${pct(r.b)}, Gold ${pct(r.g)}. Plus = Bitcoin vorn, Minus = Gold vorn.`, r.b > r.g ? 'up' : 'down')
+    : box(`Wer lief besser? (${n} Tage)`, '–', 'Kursdaten fehlen.'));
+  e.append(mc, el('div', 't-r', 'Beschreibt vergangene Kapitalflüsse, keine Prognose und keine Anlageberatung. Quellen: SPDR Gold Shares (GLD, Tagesarchiv), BGeometrics (Bitcoin-ETFs), Kurse Binance/OKX (PAXG für Gold). Gold-Marktwert = PAXG-Kurs × rund 216.000 t Goldbestand weltweit.'));
+  zweiSpaltig(e, mc);
+}
+
+function etfHead(e) {
+  e.replaceChildren();
+  const r = D.etf.filter((x) => isFinite(x.usd));
+  if (!r.length) { e.textContent = 'ETF-Daten sind gerade nicht erreichbar.'; return; }
+  const L = r[r.length - 1], cl = (v) => v >= 0 ? 'up' : 'down';
+  let streak = 1; while (streak < r.length && Math.sign(r[r.length - 1 - streak].usd) === Math.sign(L.usd)) streak++;
+  e.append(el('div', 't-l', 'Netto-Fluss am ' + L.d.split('-').reverse().join('.')), el('div', 'etf-big ' + cl(L.usd), mUsd(L.usd)),
+    el('div', 't-r', `${L.usd >= 0 ? 'Zufluss' : 'Abfluss'} seit ${streak} ${streak === 1 ? 'Handelstag' : 'Handelstagen'} in Folge · ${(L.btc > 0 ? '+' : '') + de(L.btc)} BTC`));
+  // Tabelle: Summe der Zufluss-Tage, Summe der Abfluss-Tage, Netto
+  const fen = [['Tag ' + L.d.slice(8) + '.' + L.d.slice(5, 7) + '.', 1], ['1 Woche', 5], ['1 Monat', 21], ['3 Monate', 63]];   // erste Zeile = neuester gemeldeter Handelstag
+  const tb = el('tbody');
+  fen.forEach(([name, n]) => { const sl = r.slice(-n), zu = d3.sum(sl, (x) => Math.max(x.usd, 0)), ab = d3.sum(sl, (x) => Math.min(x.usd, 0)), tr = el('tr');
+    tr.append(el('td', '', name), el('td', 'num up', mK(zu)), el('td', 'num down', mK(ab)), el('td', 'num etf-net ' + cl(zu + ab), mK(zu + ab))); tb.append(tr); });
+  const t = el('table', 'etf-tab'), th = el('tr');
+  ['US-Dollar', 'Zuflüsse', 'Abflüsse', 'Netto'].forEach((x, i) => th.append(el('th', i ? 'num' : '', x)));
+  const thead = el('thead'); thead.append(th); t.append(thead, tb);
+  const sc = el('div', 'scroll'); sc.append(t); e.append(sc);
+  // Verhältnis Zu- zu Abflüssen im letzten Monat
+  const m = r.slice(-21), zu = d3.sum(m, (x) => Math.max(x.usd, 0)), ab = -d3.sum(m, (x) => Math.min(x.usd, 0)), q = zu + ab ? zu / (zu + ab) * 100 : 50;
+  const bar = el('div', 'ls-bar etf-bar'), a = el('div', 'ls-long', `Zufluss ${de(q)} %`), b = el('div', 'ls-short', `Abfluss ${de(100 - q)} %`);
+  a.style.width = q + '%'; b.style.width = (100 - q) + '%'; bar.append(a, b);
+  e.append(el('div', 't-l', 'Verhältnis im letzten Monat'), bar);
+  if (isFinite(D.etfTotal)) { const L2 = D.rows[D.rows.length - 1];
+    e.append(el('div', 't-r', `Bestand aller US-Bitcoin-ETFs: ${de(D.etfTotal)} BTC ≈ ${mUsd(D.etfTotal * L2.kurs / 1e6, false)} zum aktuellen Kurs`)); }
+  const note = el('div', 't-r'), link = el('a', '', 'Farside Investors');
+  link.href = 'https://farside.co.uk/btc/'; link.target = '_blank'; link.rel = 'noopener'; link.style.color = 'var(--c0)';
+  if (S.etf && S.etf.v.alt) note.append('Gespeicherter Stand, die Quelle ist gerade nicht erreichbar. ');
+  note.append('Alle US-Spot-ETFs zusammen, Tageswerte in Bitcoin (BGeometrics, einige Tage Verzug) zum Tageskurs in Dollar umgerechnet. Die erste Zeile ist der neueste gemeldete Handelstag. „Zuflüsse“ = Summe der Tage mit Netto-Zufluss, „Abflüsse“ = Summe der Tage mit Netto-Abfluss. BlackRock einzeln: ', link, '.');
+  e.append(note);
+}
+
+// ---------- Liquidation Heatmap (eigene Schätzung im Stil von CoinAnk)
+const LEV = [[10, 0.3], [25, 0.3], [50, 0.25], [100, 0.15]];   // angenommene Hebel-Verteilung der neuen Positionen (übliche Annahme solcher Karten)
+const HM_ROWS = 90;   // Preis-Stufen der Heatmap
+function liqHeat() {
+  if (!S.liq) return null;
+  const [oi, kl, ls] = S.liq.v;
+  if (oi.length < 10 || kl.length < 10) return null;
+  const now = live('BTC') ? live('BTC').px : +kl[kl.length - 1][4];
+  const lo = Math.min(d3.min(kl, (c) => +c[3]), now) * 0.94, hi = Math.max(d3.max(kl, (c) => +c[2]), now) * 1.06, step = (hi - lo) / HM_ROWS;
+  const lsBy = new Map(ls.map((r) => [r.timestamp, +r.longAccount])), oiBy = new Map(oi.map((r, i) => [r.timestamp, i]));
+  let act = []; const grid = [], times = [], close = [];
+  for (let j = 0; j < kl.length; j++) {
+    const t = kl[j][0], i = oiBy.get(t);
+    if (i > 0) {
+      const d = oi[i].sumOpenInterest - oi[i - 1].sumOpenInterest;
+      if (d > 0) {   // nur neu eröffnete Positionen
+        const p = oi[i].sumOpenInterestValue / oi[i].sumOpenInterest, s = lsBy.get(t) ?? 0.5;
+        for (const [L, w] of LEV) { act.push({p: p * (1 - 1 / L), v: d * p * s * w / 1e6, long: 1}); act.push({p: p * (1 + 1 / L), v: d * p * (1 - s) * w / 1e6, long: 0}); }
+      }
+    }
+    const lw = j === kl.length - 1 ? Math.min(+kl[j][3], now) : +kl[j][3], hg = j === kl.length - 1 ? Math.max(+kl[j][2], now) : +kl[j][2];
+    act = act.filter((a) => a.long ? a.p < lw : a.p > hg);   // vom Kurs erreichte Stufen sind liquidiert
+    const col = new Float64Array(HM_ROWS);
+    for (const a of act) { const b = Math.floor((a.p - lo) / step); if (b >= 0 && b < HM_ROWS) col[b] += a.v; }
+    grid.push(col); times.push(new Date(t)); close.push(j === kl.length - 1 ? now : +kl[j][4]);
+  }
+  const last = grid[grid.length - 1], mid = (b) => lo + (b + 0.5) * step, rowsAt = [...last].map((v, b) => ({b, v, p: mid(b)}));
+  const up = rowsAt.filter((r) => r.p > now && r.v > 0), dn = rowsAt.filter((r) => r.p < now && r.v > 0);
+  return {now, lo, hi, step, grid, times, close, maxS: d3.greatest(up, (r) => r.v), maxL: d3.greatest(dn, (r) => r.v),
+    s5: d3.sum(up.filter((r) => r.p <= now * 1.05), (r) => r.v), l5: d3.sum(dn.filter((r) => r.p >= now * 0.95), (r) => r.v)};
+}
+console.assert(Math.abs(80000 * (1 - 1 / 10) - 72000) < 1e-6 && Math.abs(80000 * (1 + 1 / 100) - 80800) < 1e-6, 'Liquidationspreis-Formel');
+
+function renderLiq() {
+  const M = liqHeat(), box = $('liqChart'), head = $('liqHead');
+  if (!M) { box.textContent = 'Liquidations-Daten sind gerade nicht erreichbar.'; head.replaceChildren(); return; }
+  const kpi = (label, text, sub, cls) => { const d = el('div'); d.append(el('div', 't-l', label), el('div', 't-v ' + (cls || ''), text), el('div', 't-r', sub)); d.querySelector('.t-v').style.fontSize = '20px'; return d; };
+  const pct2 = (p) => pct((p / M.now - 1) * 100, 1), rng = (r) => `${usd(r.p - M.step / 2)} – ${usd(r.p + M.step / 2)}`;
+  head.replaceChildren(
+    kpi('Stärkste Zone darüber', M.maxS ? usd(M.maxS.p) : '—', M.maxS ? `${pct2(M.maxS.p)} · ca. ${mUsd(M.maxS.v, false)} Shorts` : '', 'up'),
+    kpi('Stärkste Zone darunter', M.maxL ? usd(M.maxL.p) : '—', M.maxL ? `${pct2(M.maxL.p)} · ca. ${mUsd(M.maxL.v, false)} Longs` : '', 'down'),
+    kpi('Shorts bis +5 %', mUsd(M.s5, false), 'würden bei einem Anstieg liquidiert'),
+    kpi('Longs bis −5 %', mUsd(M.l5, false), 'würden bei einem Rückgang liquidiert'));
+  if (box.matches(':hover') && box.querySelector('svg')) return;   // nicht unter der Maus neu zeichnen
+  box.replaceChildren();
+  const W = Math.max(280, box.clientWidth), H = 420, mt = 22, mb = 26, ml = 0, mr = 58, n = M.grid.length;
+  const x = d3.scaleTime(d3.extent(M.times), [ml, W - mr]), y = d3.scaleLinear([M.lo, M.hi], [H - mb, mt]);
+  const vals = M.grid.flatMap((c) => [...c]).filter((v) => v > 0).sort(d3.ascending), top = d3.quantileSorted(vals, 0.99) || 1;
+  const color = d3.scaleSequentialSqrt(d3.interpolateViridis).domain([0, top]).clamp(true);
+  // Heatmap auf Canvas (schnell), Achsen und Kurs als SVG darüber
+  const cv = document.createElement('canvas'), dpr = window.devicePixelRatio || 1;
+  cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  const g = cv.getContext('2d'); g.scale(dpr, dpr);
+  g.fillStyle = color(0); g.fillRect(0, 0, W, H);
+  const cw = (W - mr - ml) / n, ch = (H - mb - mt) / HM_ROWS;
+  M.grid.forEach((col, j) => col.forEach((v, b) => { if (v > 0) { g.fillStyle = color(v); g.fillRect(ml + j * cw, H - mb - (b + 1) * ch, cw + 0.6, ch + 0.6); } }));
+  box.append(cv);
+  const svg = d3.select(box).append('svg').attr('width', W).attr('height', H).attr('role', 'img')
+    .attr('aria-label', `Liquidation Heatmap: stärkste Zone darüber bei ${M.maxS ? usd(M.maxS.p) : '—'}, darunter bei ${M.maxL ? usd(M.maxL.p) : '—'}`);
+  svg.append('g').attr('class', 'ax hm-ax').attr('transform', `translate(${W - mr},0)`).call(d3.axisRight(y).ticks(8).tickFormat((d) => de(d / 1000, 1) + 'k').tickSizeOuter(0));
+  const hmMon = S.liq.v.iv === '1d' ? [1, 2, 3].find((k) => n / 30.4 / k <= Math.floor(W / 110)) || 3 : 0;   // Tagesschritte: jeder n-te Monat
+  svg.append('g').attr('class', 'ax hm-ax').attr('transform', `translate(0,${H - mb})`).call(d3.axisBottom(x).ticks(hmMon ? d3.timeMonth.every(hmMon) : Math.max(3, Math.floor(W / 110))).tickFormat(d3.timeFormat(S.liq.v.iv === '5m' || S.liq.v.iv === '15m' ? '%d.%m. %H:%M' : S.liq.v.iv === '1d' ? '%m/%y' : '%d.%m.')).tickSizeOuter(0));
+  svg.append('path').datum(M.close).style('fill', 'none').style('stroke', '#fff').style('stroke-width', 1.5)
+    .attr('d', d3.line().x((d, j) => ml + (j + 0.5) * cw).y((d) => y(d)));
+  svg.append('line').attr('x1', ml).attr('x2', W - mr).attr('y1', y(M.now)).attr('y2', y(M.now)).style('stroke', '#fff').style('stroke-dasharray', '3 3').style('opacity', 0.6);
+  const lbl = svg.append('g').attr('transform', `translate(${W - mr},${y(M.now)})`);
+  lbl.append('rect').attr('x', 0).attr('y', -9).attr('width', mr).attr('height', 18).attr('rx', 3).style('fill', '#fff');
+  lbl.append('text').attr('x', mr / 2).attr('y', 4).attr('text-anchor', 'middle').style('font-size', '11px').style('font-weight', 700).style('fill', '#111').text(de(M.now));
+  const tip = el('div', 'tip'); tip.hidden = true; box.append(tip);
+  const cross = svg.append('rect').style('fill', 'none').style('stroke', '#fff').style('stroke-width', 1.5).attr('visibility', 'hidden');
+  const show = (ev) => {
+    const [px, py] = d3.pointer(ev, svg.node()), j = Math.max(0, Math.min(n - 1, Math.floor((px - ml) / cw))), b = Math.floor((y.invert(py) - M.lo) / M.step);
+    if (b < 0 || b >= HM_ROWS || px > W - mr) { tip.hidden = true; cross.attr('visibility', 'hidden'); return; }
+    const v = M.grid[j][b], p = M.lo + (b + 0.5) * M.step;
+    cross.attr('x', ml + j * cw).attr('y', H - mb - (b + 1) * ch).attr('width', Math.max(cw, 3)).attr('height', ch).attr('visibility', 'visible');
+    tip.replaceChildren(el('div', 'tip-d', d3.timeFormat('%d.%m. %H:%M Uhr')(M.times[j])), el('div', '', 'Preis ' + rng({p})),
+      el('div', '', v > 0 ? `geschätzte ${p > M.close[j] ? 'Short' : 'Long'}-Liquidationen: ca. ${mUsd(v, false)}` : 'kaum Liquidationen'), el('div', 'tip-d', 'Kurs damals: ' + usd(M.close[j])));
+    tip.hidden = false;
+    const left = px + 14 + tip.offsetWidth > W - mr ? px - 14 - tip.offsetWidth : px + 14;
+    tip.style.left = Math.max(0, left) + 'px'; tip.style.top = Math.max(0, Math.min(py - 20, H - mb - tip.offsetHeight)) + 'px';
+  };
+  svg.on('pointermove', show).on('pointerdown', show).on('pointerleave', () => { tip.hidden = true; cross.attr('visibility', 'hidden'); });
+}
+
+// Chart-Karten einmal anlegen (vorher leeren: die Versand-Datei bringt eine fertig gezeichnete Momentaufnahme mit)
+$('charts').replaceChildren();
+CHARTS.forEach((o) => {
+  const card = el('div', 'card' + (o.wide ? ' wide' : '') + (o.cls ? ' ' + o.cls : ''));
+  o.h2 = el('h2', '', o.title); o.subEl = el('p', 'sub', o.sub); card.append(o.h2, o.subEl);
+  if ((o.lines || []).filter((l) => !l.hidden).length > 1) { const leg = el('div', 'leg');
+    [...o.lines].filter((l) => !l.hidden).reverse().forEach((l) => { const s = el('span'), i = el('i', 'sw'); i.style.background = `var(--c${l.c})`; s.append(i, l.l); leg.append(s); });
+    card.append(leg); }
+  if (o.note) { o.noteEl = el('div', 'lead'); o.noteEl.style.marginBottom = '10px'; card.append(o.noteEl); }
+  o.box = el('div', 'chart', '—'); card.append(o.box); $('charts').append(card);
+});
+
+function chart(o, all) {
+  const box = o.box; let rows = o.rows ? o.rows() : all.slice(-win); box.replaceChildren();
+  if (o.noteEl) o.note(o.noteEl);
+  if (o.id === 'funding' || o.id === 'oi') { const q = quelle(o.id); o.h2.textContent = q ? o.title.replace(/\)$/, ', ' + q + ')') : o.title; }   // Quelle erst nennen, wenn bekannt
+  if (o.id === 'funding') o.subEl.textContent = o.sub + (quelle('funding') === 'OKX' ? ' (OKX liefert ca. 3 Monate.)' : '');
+  const W = Math.max(240, box.clientWidth), H = Math.max(236, box.clientHeight), mt = 12, mb = 26, mr = 22, lines = o.lines || [], refs = o.refs || [];   // H: ETF-Karte füllt die gestreckte Karte
+  const fields = [...lines.filter((l) => !l.hidden).map((l) => l.f), ...(o.band || []), ...(o.bars ? [o.bars] : [])];
+  const da = (r) => fields.some((f) => Number.isFinite(r[f]));
+  rows = rows.slice(Math.max(0, rows.findIndex(da)), rows.findLastIndex(da) + 1);   // nur der vorhandene Datenbereich: kürzere Historie (z. B. OKX-Funding) füllt trotzdem den Chart
+  const vals = rows.flatMap((r) => fields.map((f) => r[f])).filter(Number.isFinite).concat(refs, o.bars ? [0] : []);
+  if (!rows.length || !vals.length) { box.textContent = 'Keine Daten im Zeitraum'; return; }   // rows leer = kein einziger Wert (sonst nur Null-Linie)
+  const y = d3.scaleLinear().domain(o.dom || d3.extent(vals)).range([H - mb, mt]); if (!o.dom) y.nice(5);
+  const svg = d3.select(box).append('svg').attr('width', '100%').attr('height', H).attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', o.title);
+  const gy = svg.append('g').attr('class', 'ax').call(d3.axisLeft(y).ticks(5).tickFormat((v) => o.fmt(v)).tickSize(0).tickPadding(6));
+  gy.select('.domain').remove();
+  let ml = 0; gy.selectAll('text').each(function () { ml = Math.max(ml, this.getComputedTextLength()); }); ml = Math.ceil(ml) + 10;
+  gy.attr('transform', `translate(${ml},0)`);
+  const TF = o.local ? d3.timeFormat : d3.utcFormat;
+  const x = (o.local ? d3.scaleTime() : d3.scaleUtc()).domain(d3.extent(rows, (r) => r.t)).range([ml, W - mr]);
+  svg.append('g').selectAll('line').data(y.ticks(5)).join('line').attr('x1', ml).attr('x2', W - mr).attr('y1', (d) => y(d)).attr('y2', (d) => y(d)).style('stroke', 'var(--grid)');
+  const platz = Math.max(2, Math.floor((W - ml - mr) / 70)), tage = (x.domain()[1] - x.domain()[0]) / 864e5;
+  const mon = !o.xfmt && tage > 100 ? [1, 2, 3, 6, 12].find((n) => tage / 30.4 / n <= platz) || 12 : 0;   // Monatsachse: gleichmäßig jeder n-te Monat
+  svg.append('g').attr('class', 'ax').attr('transform', `translate(0,${H - mb})`)
+    .call(d3.axisBottom(x).ticks(mon ? d3.utcMonth.every(mon) : platz).tickFormat(TF(o.xfmt || (mon ? '%m/%y' : '%d.%m.'))).tickSizeOuter(0));
+  const ok = (f) => (r) => Number.isFinite(r[f]);
+  if (o.band) svg.append('path').datum(rows).style('fill', 'var(--c3)').style('opacity', 0.18)
+    .attr('d', d3.area().defined(ok(o.band[0])).x((r) => x(r.t)).y0((r) => y(r[o.band[0]])).y1((r) => y(r[o.band[1]])));
+  if (o.bars) { const bw = Math.max(1, (W - mr - ml) / rows.length - 0.5);
+    svg.append('g').selectAll('rect').data(rows.filter(ok(o.bars))).join('rect').attr('x', (r) => x(r.t) - bw / 2).attr('width', bw)
+      .attr('y', (r) => Math.min(y(r[o.bars]), y(0))).attr('height', (r) => Math.abs(y(r[o.bars]) - y(0)))
+      .style('fill', (r) => r[o.bars] >= 0 ? 'var(--ok)' : 'var(--bad)').style('opacity', 0.6); }
+  if (o.area) {   // weicher Farbverlauf unter der Kurslinie
+    const gr = svg.append('defs').append('linearGradient').attr('id', 'grad-' + o.id).attr('x1', 0).attr('y1', 0).attr('x2', 0).attr('y2', 1);
+    gr.append('stop').attr('offset', '0%').style('stop-color', 'var(--c0)').style('stop-opacity', 0.28);
+    gr.append('stop').attr('offset', '100%').style('stop-color', 'var(--c0)').style('stop-opacity', 0);
+    svg.append('path').datum(rows).style('fill', `url(#grad-${o.id})`)
+      .attr('d', d3.area().defined(ok(o.area)).x((r) => x(r.t)).y0(H - mb).y1((r) => y(r[o.area])));
+  }
+  refs.forEach((v) => {
+    svg.append('line').attr('x1', ml).attr('x2', W - mr).attr('y1', y(v)).attr('y2', y(v)).style('stroke', 'var(--mut)').style('stroke-dasharray', '4 3');
+    svg.append('text').attr('class', 'ref').attr('x', W - mr).attr('y', y(v) - 3).attr('text-anchor', 'end').text(o.fmt(v)); });
+  lines.filter((l) => !l.hidden).forEach((l) => svg.append('path').datum(rows).style('fill', 'none').style('stroke', `var(--c${l.c})`).style('stroke-width', l.w || 1.6).style('stroke-linejoin', 'round')
+    .attr('d', d3.line().defined(ok(l.f)).x((r) => x(r.t)).y((r) => y(r[l.f]))));
+  const rule = svg.append('line').attr('y1', mt).attr('y2', H - mb).style('stroke', 'var(--mut)').attr('visibility', 'hidden');
+  const tip = el('div', 'tip'); tip.hidden = true; box.append(tip);
+  const bis = d3.bisector((r) => r.t).center;
+  const tips = [...[...lines].reverse().map((l) => [l.l, l.f]), ...(o.bars ? [[o.barL, o.bars]] : [])];
+  const show = (ev) => { const r = rows[bis(rows, x.invert(d3.pointer(ev, svg.node())[0]))]; if (!r) return;
+    rule.attr('x1', x(r.t)).attr('x2', x(r.t)).attr('visibility', 'visible');
+    tip.replaceChildren(el('div', 'tip-d', TF(o.tfmt || (o.rows ? '%d.%m.%Y %H:%M UTC' : '%d.%m.%Y'))(r.t)));
+    tips.forEach(([l, f]) => { if (Number.isFinite(r[f])) tip.append(el('div', '', l + ': ' + (f === 'unzen' ? de(r[f], 1) : o.fmt(r[f])))); });
+    tip.hidden = false;
+    const left = x(r.t) + 12 + tip.offsetWidth > W ? x(r.t) - 12 - tip.offsetWidth : x(r.t) + 12;
+    tip.style.left = Math.max(0, left) + 'px'; tip.style.top = mt + 'px'; };
+  svg.on('pointermove', show).on('pointerdown', show).on('pointerleave', () => { tip.hidden = true; rule.attr('visibility', 'hidden'); });
+}
+// Beim automatischen Neuzeichnen einen Chart auslassen, über dem gerade die Maus steht (sonst verschwindet der Tooltip alle 15 Sekunden)
+const drawCharts = (force) => { if (D) CHARTS.forEach((o) => { if (force || !(o.box.matches(':hover') && o.box.querySelector('svg'))) chart(o, D.rows); });
+  if (D) CHARTS.forEach((o) => { const s = o.box.querySelector('svg'); if (s && Math.abs(o.box.clientHeight - s.getAttribute('height')) > 2) chart(o, D.rows); }); };   // zweiter Durchgang: Karten, die durch Nachbarn höher wurden, füllen
+
+function render() {
+  const by = Object.fromEntries(D.ind.map((r) => [r.id, r]));
+  const cnt = (s) => D.ind.filter((r) => r.signal === s).length, b = cnt('bullisch'), n = cnt('neutral'), x = cnt('bärisch'), all = b + n + x;
+  $('lead').textContent = `Von ${all} bewerteten Indikatoren stehen ${b} auf bullisch, ${n} auf neutral und ${x} auf bärisch. Abstand des Kurses zum Allzeithoch: ${by.ath.anzeige}.`;
+  $('ampel').replaceChildren(...[[b, 'a-ok'], [n, 'a-mid'], [x, 'a-bad']].map(([v, c]) => { const s = el('span', c); s.style.width = v / all * 100 + '%'; return s; }));
+  const chip = (s) => { const c = el('span', 'chip', s); c.dataset.s = s; return c; };
+  $('preis').textContent = by.kurs.anzeige;
+  $('chg').textContent = pct(D.chg, 2); $('chg').className = 'chg ' + (D.chg >= 0 ? 'up' : 'down');
+  $('ampelLeg').replaceChildren(...[[b, 'bullisch', 'a-ok'], [n, 'neutral', 'a-mid'], [x, 'bärisch', 'a-bad']].map(([v, t, c]) => { const s = el('span'); s.append(el('i', c), `${v} ${t}`); return s; }));
+  gauge(by.fng ? by.fng.wert : NaN);
+  liveTick();
+  $('tiles').replaceChildren(...[
+    ['rsi', 'RSI (14 Tage)', 'rsi', {min: 0, max: 100, lo: 30, hi: 70}], ['sma200', 'Kurs zur 200-Tage-Linie', 'kurs', null, 1],
+    ['mvrvz', 'MVRV-Z-Score (Bewertung)', null, {min: -1, max: 8, lo: 0, hi: 7}, 1],
+    ['funding', `Funding Rate (${quelle('funding')}, je 8 Std.)`, 'funding', {min: -0.02, max: 0.05, lo: 0, hi: 0.03}], ['wma200', 'Kurs zur 200-Wochen-Linie', null, {min: 0, max: 5, lo: 1, hi: 4}],
+    ['oi', `Open Interest (${quelle('oi')})`], ['puell', 'Puell-Multiple', null, {min: 0, max: 5, lo: 0.5, hi: 4}], ['vola', 'Schwankung (30 Tage)'],
+    ['stablecoin', 'Stablecoins (Wachstum 30 Tage)', null, null, 1], ['cbprem', 'Coinbase-Premium', null, null, 1], ['dvol', 'DVOL (Optionen-Volatilität)', null, null, 1], ['boerse', 'Börsen-Nettofluss (7 Tage)', null, null, 1],
+    ['dominanz', 'Bitcoin-Dominanz'], ['rotation', 'Bitcoin oder Gold?', 'unzen'], ['ethbtc', 'ETH/BTC', 'ethbtc'], ['hash', 'Hash-Ribbon', 'hash30'], ['halving', 'Tage seit dem Halving'],
+  ].filter(([id]) => by[id]).map(([id, label, field, zone, info]) => {
+    const r = by[id], c = el('div', 'card'); c.append(el('div', 't-l', label), el('div', 't-v', r.anzeige)); c.title = r.name + ': ' + r.regel;
+    if (r.signal !== 'Kontext') c.append(chip(r.signal));
+    if (zone) c.append(track(r.wert, zone));
+    const s = field && !zone ? spark(field) : null; if (s) c.append(s);
+    if (info) c.append(el('div', 't-r', r.regel));   // Lesart direkt sichtbar (z. B. Mayer, NUPL, Perzentil)
+    return c; }));
+  renderCoins();
+  const lsRow = (titel, note, long, lText, sText) => { const w = el('div'), h = el('div', 'ls-h'), bar = el('div', 'ls-bar'), a = el('div', 'ls-long', lText), c = el('div', 'ls-short', sText);
+    h.append(el('b', '', titel), el('span', '', note)); a.style.width = long + '%'; c.style.width = (100 - long) + '%'; bar.append(a, c); w.append(h, bar); return w; };
+  const lsRows = [], ex = [];
+  if (S.lsNow && S.lsNow.v[0]) ex.push([quelle('lsNow'), S.lsNow.v[0].longAccount * 100]);
+  if (S.lsBybit && S.lsBybit.v.result && S.lsBybit.v.result.list[0]) ex.push(['Bybit', S.lsBybit.v.result.list[0].buyRatio * 100]);
+  if (ex.length) { const l = d3.mean(ex, (e) => e[1]);
+    lsRows.push(lsRow('Alle Händler zusammen', ex.map(([n, v]) => `${n}: ${de(v, 0)} % long`).join(' · '), l, `Long ${de(l, 1)} %`, `Short ${de(100 - l, 1)} %`)); }
+  $('longshort').replaceChildren(...(lsRows.length ? lsRows : [el('p', 'sub', 'Long/Short-Daten sind gerade nicht erreichbar.')]));
+  const dir = (t) => 'num ' + (t.startsWith('+') ? 'up' : t.startsWith('-') ? 'down' : '');
+  $('coins').replaceChildren(...D.coins.map((r) => { const tr = el('tr');
+    tr.append(el('td', '', r.coin), el('td', 'num', r.kurs), el('td', dir(r.d24), r.d24), el('td', dir(r.d7), r.d7), el('td', dir(r.d30), r.d30), el('td', 'num', r.mcap)); return tr; }));
+  drawCharts();
+  renderLiq();
+}
+
+// ---------- Live-Kurse: sekündlich per WebSocket, sonst der letzte Minuten-Abruf
+const LIVE = {};   // Symbol -> {px, ch, at}
+const live = (sym) => LIVE[sym] && Date.now() - LIVE[sym].at < 20000 ? LIVE[sym] : undefined;   // eingefrorene Kurse (Stream hängt) nicht nutzen
+const stellen = (px) => px > 1000 ? 0 : px > 1 ? 2 : px > 0.01 ? 4 : px > 0.0001 ? 6 : 8;   // Nachkommastellen je nach Kurshöhe
+function renderCoins() {
+  const be = live('BTCEUR') ? live('BTCEUR').px : S.eur ? +S.eur.v.price : NaN, bu = live('BTC') ? live('BTC').px : S.btc ? +S.btc.v[S.btc.v.length - 1][4] : NaN;
+  const fx = be / bu;   // Euro je Dollar aus BTC/EUR ÷ BTC/USDT; fehlt ein Kurs, entfällt der Europreis
+  $('meine').replaceChildren(...[...ALLE].reverse().map(([sym, name, cgId]) => {
+    const t = S.meine && S.meine.v.find((r) => r.symbol === sym + 'USDT'), g = cgId && S.cg && S.cg.v.find((r) => r && r.currency_pair === cgId);
+    const v = live(sym) || (t && {px: +t.lastPrice, ch: +t.priceChangePercent}) || (g && {px: +g.last, ch: +g.change_percentage});
+    if (!v) return null;
+    const c = el('div'); c.append(el('div', 't-l', `${name} (${sym})`), el('div', 't-v', usd(v.px, stellen(v.px))), ...(fx > 0 && isFinite(fx) ? [el('div', 't-r', `≈ ${de(v.px * fx, stellen(v.px * fx))} €`)] : []), el('span', 'chg ' + (v.ch >= 0 ? 'up' : 'down'), pct(v.ch, 1)));
+    if (cgId) c.append(el('div', 't-r', 'alle 15 Sekunden (Gate.io)'));
+    return c; }).filter(Boolean));
+}
+function liveTick() {
+  renderCoins();
+  const eur = live('BTCEUR') ? live('BTCEUR').px : S.eur ? +S.eur.v.price : NaN;   // Euro-Kurs direkt vom Handelspaar BTC/EUR
+  if (isFinite(eur)) $('preisEur').textContent = de(eur) + ' €';
+  const b = live('BTC');
+  if (b && D) { const ch = (b.px / D.prevClose - 1) * 100;
+    $('preis').textContent = usd(b.px); $('chg').textContent = pct(ch, 2); $('chg').className = 'chg ' + (ch >= 0 ? 'up' : 'down'); }
+}
+let wsDirty = false;
+setInterval(() => { if (wsDirty) { wsDirty = false; liveTick(); } }, 1000);
+let wsOkx = false;   // true = Ersatz-Stream von OKX (wenn Binance nicht erreichbar ist)
+let wsFehl = 0;   // Fehlversuche in Folge: Pause wächst bis 30 s
+let wsAkt = null, wsLast = 0;   // offene Verbindung und Zeit der letzten Nachricht
+setInterval(() => { if (wsAkt && wsAkt.readyState === 1 && Date.now() - wsLast > 30000) wsAkt.close(); }, 5000);   // 30 s stumm: Verbindung hängt, neu verbinden
+function connect() {
+  const okx = wsOkx, syms = ['BTC', ...MEINE.map((c) => c[0])]; let opened = false;
+  const ws = new WebSocket(okx ? 'wss://ws.okx.com:8443/ws/v5/public'
+    : 'wss://stream.binance.com:9443/stream?streams=' + syms.map((s) => s.toLowerCase() + 'usdt@miniTicker').concat('btceur@miniTicker').join('/'));
+  wsAkt = ws;
+  const tmo = setTimeout(() => { if (!opened) ws.close(); }, 8000);   // gesperrte Verbindung hängt sonst minutenlang
+  ws.onopen = () => { opened = true; wsFehl = 0; wsLast = Date.now(); clearTimeout(tmo); $('wsState').textContent = okx ? '● live (OKX)' : '● live'; $('wsState').className = 'live';
+    if (okx) syms.map((s) => s + '-USDT').concat('BTC-EUR').forEach((instId) => ws.send(JSON.stringify({op: 'subscribe', args: [{channel: 'tickers', instId}]}))); };   // einzeln, damit ein fehlender Coin die anderen nicht blockiert
+  ws.addEventListener('message', () => { wsLast = Date.now(); });
+  ws.onmessage = okx ? (ev) => { const d = (JSON.parse(ev.data).data || [])[0]; if (!d || !d.instId) return;
+      LIVE[d.instId.replace('-USDT', '').replace('-', '')] = {px: +d.last, ch: (d.last / d.open24h - 1) * 100, at: Date.now()}; wsDirty = true; }
+    : (ev) => { const d = JSON.parse(ev.data).data; if (!d || !d.s) return;
+      LIVE[d.s.replace('USDT', '')] = {px: +d.c, ch: (d.c / d.o - 1) * 100, at: Date.now()}; wsDirty = true; };
+  ws.onclose = () => { clearTimeout(tmo); if (!opened) wsOkx = !wsOkx;   // nicht erreichbar: andere Börse probieren
+    $('wsState').textContent = 'Live-Verbindung getrennt, neuer Versuch …'; $('wsState').className = 'live off';
+    if (navigator.onLine === false) { window.addEventListener('online', connect, {once: true}); return; }   // offline: erst bei Netz-Rückkehr neu
+    setTimeout(connect, Math.min(30000, 500 * 2 ** wsFehl++)); };
+  ws.onerror = () => ws.close();
+}
+connect();
+
+// ---------- Eigener Live-Kerzenchart (Ersatz, wenn www.tradingview.com im Netz gesperrt ist)
+const KC_TF = [['1m', '1m', 6e4], ['5m', '5m', 3e5], ['15m', '15m', 9e5], ['1h', '1H', 36e5], ['4h', '4H', 144e5], ['1d', '1Dutc', 864e5, '1D'], ['1w', '1Wutc', 6048e5, '1W']];   // Binance-Intervall, OKX-Bar, Länge in ms, Beschriftung
+const KC_COINS = [['BTC', 'Bitcoin'], ...MEINE];
+const KC = {sym: 'BTC', tf: '4h', chart: null, kerzen: null, vol: null, last: null, at: 0, nr: 0, bars: null, vpAn: true, tpAn: true, vp: null, tage: null, cv: null, raf: 0};   // bars = geladene Kerzen mit Volumen, vp = letztes Profil, tage = Tages-POCs
+const KC_TZ = new Date().getTimezoneOffset() * 60;   // feste Verschiebung für alle Kerzen (je Kerze gäbe bei der Zeitumstellung Lücken/Doppel)
+const kcT = (ts, ms) => ts / 1000 - (ms < 864e5 ? KC_TZ : 0);   // Chart rechnet in UTC: um den Abstand zur Ortszeit verschieben (nicht bei Tages-/Wochenkerzen)
+const kcVol = (b, v) => ({time: b.time, value: v, color: b.close >= b.open ? 'rgba(38,166,154,0.45)' : 'rgba(239,83,80,0.45)'});
+const kcMsg = (t) => { $('kcMsg').textContent = t; $('kcMsg').hidden = !t; };
+// Volumenprofil: Volumen je Kerze gleichmäßig über Tief–Hoch auf die Preisstufen verteilt (kein Tick-Volumen verfügbar).
+// POC = Mitte der stärksten Stufe; Value Area = vom POC aus je die größere Nachbarstufe dazu, bis 70 % erreicht sind
+function volProfil(kerzen, stufen) {
+  let lo = Infinity, hi = -Infinity, sum = 0;
+  for (const k of kerzen) { lo = Math.min(lo, k.low); hi = Math.max(hi, k.high); }
+  const step = (hi - lo) / stufen, vol = new Array(stufen).fill(0);
+  for (const k of kerzen) { sum += k.v;
+    if (!step || k.high === k.low) { vol[step ? Math.min(stufen - 1, Math.floor((k.low - lo) / step)) : 0] += k.v; continue; }
+    const a = (k.low - lo) / step, b = (k.high - lo) / step;
+    for (let i = Math.floor(a); i < stufen && i < b; i++) vol[i] += k.v * (Math.min(b, i + 1) - Math.max(a, i)) / (b - a); }
+  let p = 0; vol.forEach((v, i) => { if (v > vol[p]) p = i; });
+  let l = p, h = p, va = vol[p];
+  while (va < 0.7 * sum && (l > 0 || h < stufen - 1)) { const auf = h < stufen - 1 ? vol[h + 1] : -1, ab = l > 0 ? vol[l - 1] : -1;
+    if (auf >= ab) { h++; va += auf; } else { l--; va += ab; } }
+  return {lo, step, vol, poc: lo + (p + 0.5) * step, vaLo: lo + l * step, vaHi: lo + (h + 1) * step};
+}
+{ const t = volProfil([{low: 0, high: 4, v: 4}, {low: 1, high: 2, v: 6}, {low: 2, high: 2, v: 1}], 4);   // Stufen: 1, 7, 2, 1
+  console.assert(t.vol.join() === '1,7,2,1' && t.poc === 1.5 && t.vaLo === 1 && t.vaHi === 3 && volProfil([{low: 5, high: 5, v: 2}], 4).poc === 5, 'Volumenprofil falsch'); }
+const kcNeu = () => { if (!KC.raf) KC.raf = requestAnimationFrame(() => { KC.raf = 0; kcZeichne(); }); };   // höchstens einmal je Bild zeichnen
+function kcZeichne() {   // Volumenprofil der sichtbaren Kerzen (rechts) und Tages-POCs auf das Canvas über dem Chart
+  const c = KC.cv, B = KC.bars; if (!c) return;
+  const dpr = window.devicePixelRatio || 1, w = c.clientWidth, h = c.clientHeight, g = c.getContext('2d');
+  if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
+  g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h); KC.vp = null;
+  const ts = KC.chart.timeScale(), r = ts.getVisibleLogicalRange(); if (!B || !B.length || !r || !KC.last) return;
+  const W = w - KC.chart.priceScale('right').width(), H = h - ts.height(), y = (p) => KC.kerzen.priceToCoordinate(p), ms = KC.last.ms, n = stellen(KC.last.close);
+  const text = (t, x, yy, farbe) => { g.lineWidth = 3; g.strokeStyle = '#0d1117'; g.strokeText(t, x, yy); g.fillStyle = farbe; g.fillText(t, x, yy); };   // dunkler Rand: auch über Kerzen lesbar
+  g.save(); g.beginPath(); g.rect(0, 0, W, H); g.clip(); g.font = '11px "Segoe UI", system-ui, sans-serif';   // nicht über Preis- und Zeitachse zeichnen
+  const sicht = B.slice(Math.max(0, Math.ceil(r.from)), Math.max(0, Math.floor(r.to) + 1));
+  if (KC.vpAn && sicht.length) {
+    const P = KC.vp = volProfil(sicht, 80), max = Math.max(...P.vol) || 1, bw = W * (W < 500 ? 0.3 : 0.25);
+    P.vol.forEach((v, i) => { const p = P.lo + i * P.step, y0 = y(p + P.step), y1 = y(p), m = p + P.step / 2; if (y0 == null || y1 == null) return;
+      g.fillStyle = m >= P.vaLo && m <= P.vaHi ? 'rgba(46,196,255,0.38)' : 'rgba(139,152,168,0.25)';   // Value Area blau (--c0), sonst grau
+      g.fillRect(W - v / max * bw, y0, v / max * bw, Math.max(1, y1 - y0 - 1)); });
+    const yp = y(P.poc);
+    if (yp != null) { g.fillStyle = '#f5a623'; g.fillRect(0, Math.round(yp), W, 1); g.textAlign = 'right'; text('POC ' + usd(P.poc, n), W - bw - 6, yp - 5, '#f5a623'); g.textAlign = 'left'; }   // --c1; Beschriftung links neben dem Profil (Tages-POCs stehen am linken Rand)
+  }
+  if (KC.tpAn && ms <= 36e5 && KC.tage && KC.tage.sym === KC.sym) {
+    const E = B[B.length - 1], x = (t) => { const i = B.findIndex((b) => b.ts >= t);   // Zeit → x über die Kerzen-Nummer (klappt auch vor der ersten und nach der letzten Kerze)
+      return ts.logicalToCoordinate(i < 0 ? B.length - 1 + (t - E.ts) / ms : i - (B[i].ts - t) / ms); };
+    KC.tage.tage.forEach((d, i) => { const yp = y(d.poc), x0 = x(d.t0), x1 = x(Math.min(d.t1, E.ts)); if (yp == null || x0 == null || x1 == null) return;
+      const offen = d.offen && !B.some((b) => b.ts >= d.t1 && b.low <= d.poc && b.high >= d.poc);   // seit dem Abruf berührt? (auch laufende Kerze)
+      if (!offen && x1 < 0) return;   // Linie liegt links außerhalb
+      g.beginPath(); g.setLineDash(offen ? [6, 4] : []); g.lineWidth = offen ? 1.5 : 2; g.strokeStyle = offen ? '#f85149' : '#b388ff';
+      g.moveTo(x0, Math.round(yp) + 0.5); g.lineTo(offen ? W : x1, Math.round(yp) + 0.5); g.stroke(); g.setLineDash([]);
+      text((offen ? 'offener POC ' : 'POC ') + d.tag, Math.max(6, x0 + 4), i % 2 ? yp + 13 : yp - 5, offen ? '#f85149' : '#b388ff'); });   // abwechselnd über/unter der Linie: Nachbartage überdecken sich nicht
+  }
+  g.restore();
+}
+async function kcTage() {   // Tages-POCs (UTC-Tage) aus 15-Minuten-Kerzen: ein Abruf je Coin, gilt 5 Minuten
+  const sym = KC.sym, alt = KC.tage;
+  if (alt && alt.sym === sym && Date.now() - alt.at < 3e5) return;
+  KC.tage = {sym, at: Date.now(), tage: alt && alt.sym === sym ? alt.tage : []};   // gleich vermerken: kein doppelter Abruf
+  let k; try { k = await JB(`https://api.binance.com/api/v3/klines?symbol=${sym}USDT&interval=15m&limit=480`, () => okxKl(sym + '-USDT', '15m', 300)); } catch (e) { return; }   // OKX: 300 = ein Abruf, dann weniger Tage
+  if (KC.tage.sym !== sym || !k || !k.length) return;
+  const K = k.map((c) => ({ts: +c[0], high: +c[2], low: +c[3], v: +c[5] || 0})), E = K[K.length - 1].ts, tage = [];
+  for (let t0 = Math.ceil(K[0].ts / 864e5) * 864e5; t0 <= E; t0 += 864e5) {   // nur ganz abgedeckte Tage (+ der laufende)
+    const t1 = t0 + 864e5, T = K.filter((c) => c.ts >= t0 && c.ts < t1), D = new Date(t0); if (!T.length) continue;
+    const poc = volProfil(T, 40).poc;   // offen = abgeschlossener Tag, dessen POC danach nicht mehr berührt wurde
+    tage.push({t0, t1, poc, tag: `${D.getUTCDate()}.${D.getUTCMonth() + 1}.`, offen: t1 <= E && !K.some((c) => c.ts >= t1 && c.low <= poc && c.high >= poc)}); }
+  KC.tage.tage = tage.slice(-5); kcNeu();
+}
+function kcInit() {
+  if (KC.chart) return true;
+  if (typeof LightweightCharts === 'undefined') { kcMsg('Die Chart-Bibliothek konnte nicht geladen werden (cdn.jsdelivr.net nicht erreichbar).'); return false; }
+  const grid = {color: 'rgba(139,152,168,0.08)'};
+  KC.chart = LightweightCharts.createChart($('kcChart'), {autoSize: true, grid: {vertLines: grid, horzLines: grid},
+    layout: {background: {type: 'solid', color: '#0d1117'}, textColor: '#8b98a8', attributionLogo: true},   // Logo = von der Lizenz verlangte Namensnennung
+    rightPriceScale: {borderColor: '#2a313c'}, timeScale: {borderColor: '#2a313c'}, handleScroll: {vertTouchDrag: false}});   // senkrecht wischen scrollt am Handy die Seite
+  KC.kerzen = KC.chart.addCandlestickSeries({upColor: '#26a69a', downColor: '#ef5350', wickUpColor: '#26a69a', wickDownColor: '#ef5350', borderVisible: false});
+  KC.kerzen.priceScale().applyOptions({scaleMargins: {top: 0.08, bottom: 0.25}});
+  KC.vol = KC.chart.addHistogramSeries({priceFormat: {type: 'volume'}, priceScaleId: 'vol', lastValueVisible: false, priceLineVisible: false});
+  KC.vol.priceScale().applyOptions({scaleMargins: {top: 0.8, bottom: 0}});
+  KC.cv = $('kcChart').appendChild(el('canvas', 'kc-vp')); KC.cv.setAttribute('aria-hidden', 'true');
+  KC.chart.timeScale().subscribeVisibleLogicalRangeChange(kcNeu); new ResizeObserver(kcNeu).observe($('kcChart'));   // Zoomen, Verschieben, Größenänderung: Profil neu
+  return true;
+}
+async function kcLoad() {
+  KC.at = Date.now();
+  if (!kcInit()) return;
+  const nr = ++KC.nr, sym = KC.sym, [iv, bar, ms] = KC_TF.find((t) => t[0] === KC.tf);
+  let k = null;
+  try { k = await JB(`https://api.binance.com/api/v3/klines?symbol=${sym}USDT&interval=${iv}&limit=500`, () => okxKl(sym + '-USDT', bar, 300)); } catch (e) {}   // Binance gesperrt (BN_AUS): gleich OKX
+  if (nr !== KC.nr) return;   // inzwischen anderer Coin/Zeitrahmen gewählt
+  $('kcTp').disabled = ms > 36e5;   // Tages-POC nur bis 1h sinnvoll
+  if (!k || !k.length) { KC.last = null; KC.bars = null; kcNeu(); KC.kerzen.setData([]); KC.vol.setData([]); kcMsg(`Für ${sym} sind gerade keine Kerzen-Daten erreichbar (Binance und OKX).`); return; }
+  const bars = [], vols = [];
+  for (const c of k) { const b = {time: kcT(c[0], ms), open: +c[1], high: +c[2], low: +c[3], close: +c[4], ts: +c[0], v: +c[5] || 0};
+    if (bars.length && b.time <= bars[bars.length - 1].time) continue;   // Sicherheitsnetz: Zeiten müssen streng steigen
+    bars.push(b); vols.push(kcVol(b, +c[5] || 0)); }
+  const L = bars[bars.length - 1], p = stellen(L.close);
+  KC.kerzen.applyOptions({priceFormat: {type: 'price', precision: p, minMove: 10 ** -p}});
+  KC.chart.applyOptions({timeScale: {timeVisible: ms < 864e5, secondsVisible: false}});
+  KC.kerzen.setData(bars); KC.vol.setData(vols);
+  if (KC.gez !== sym + iv) { KC.gez = sym + iv; KC.chart.timeScale().scrollToRealTime(); }   // nach Coin-/Zeitrahmenwechsel wieder zur aktuellen Kerze
+  KC.last ={...L, ts: +k[k.length - 1][0], ms, v: +k[k.length - 1][5] || 0};
+  KC.bars = bars; bars[bars.length - 1] = KC.last;   // letzte Kerze wird vom Live-Kurs fortgeschrieben
+  kcMsg(''); kcHead(); kcNeu(); if (ms <= 36e5) kcTage();
+}
+function kcHead() {
+  const v = live(KC.sym), px = v ? v.px : KC.last && KC.last.close;
+  $('kcName').textContent = KC_COINS.find((c) => c[0] === KC.sym)[1];
+  $('kcPx').textContent = px ? usd(px, stellen(px)) : '—';
+  $('kcChg').textContent = v ? pct(v.ch, 2) + ' (24 Std.)' : ''; $('kcChg').className = v ? 'chg ' + (v.ch >= 0 ? 'up' : 'down') : '';
+}
+function kcTick() {   // jede Sekunde: letzte Kerze mit dem Live-Kurs fortschreiben, alle 60 s komplett neu laden
+  if ($('kc-box').hidden) return;
+  if (Date.now() - KC.at > 60000) { kcLoad(); return; }
+  kcHead();
+  const v = live(KC.sym); let L = KC.last; if (!v || !L) return;
+  const now = Date.now();
+  if (now >= L.ts + L.ms) {   // Intervall abgelaufen: neue Kerze beginnt beim letzten Schlusskurs
+    const ts = L.ts + Math.floor((now - L.ts) / L.ms) * L.ms, time = kcT(ts, L.ms);
+    if (time <= L.time) return;
+    L = KC.last = {time, ts, ms: L.ms, open: L.close, high: L.close, low: L.close, close: L.close, v: 0};
+  }
+  L.close = v.px; L.high = Math.max(L.high, v.px); L.low = Math.min(L.low, v.px);
+  KC.kerzen.update({time: L.time, open: L.open, high: L.high, low: L.low, close: L.close}); KC.vol.update(kcVol(L, L.v));
+  if (KC.bars[KC.bars.length - 1] !== L) KC.bars.push(L);
+  kcNeu();   // höchstens 1×/s (Takt von kcTick)
+}
+setInterval(kcTick, 1000);
+$('kcCoin').replaceChildren(...KC_COINS.map(([s, n]) => { const o = el('option', '', `${n} (${s})`); o.value = s; return o; }));
+$('kcCoin').addEventListener('change', (e) => { KC.sym = e.target.value; KC.last = null; kcHead(); kcLoad(); });
+$('kcTf').replaceChildren(...KC_TF.map(([iv, , , label]) => { const b = el('button', '', label || iv); b.type = 'button'; b.dataset.tf = iv; b.setAttribute('aria-pressed', iv === KC.tf);
+  b.addEventListener('click', () => { KC.tf = iv; KC.last = null; $('kcTf').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b)); kcLoad(); });
+  return b; }));
+for (const [id, key] of [['kcVp', 'vpAn'], ['kcTp', 'tpAn']]) $(id).addEventListener('click', (e) => { KC[key] = !KC[key]; e.target.setAttribute('aria-pressed', KC[key]); kcNeu(); });
+function zeigeKc(kc) {   // immer nur einer der beiden Charts sichtbar
+  $('tvBox').hidden = kc; $('kc-box').hidden = !kc; $('kcInfo').hidden = !kc; $('tv-card').querySelector('h2').textContent = kc ? 'Live-Kerzenchart' : 'TradingView-Chart';
+  $('btnTv').setAttribute('aria-pressed', !kc); $('btnKc').setAttribute('aria-pressed', kc);
+  if (kc && !KC.last) kcLoad();
+}
+let kcSelbst = false;   // selbst umgeschaltet: Automatik greift nicht mehr ein
+$('btnTv').addEventListener('click', () => { kcSelbst = true; zeigeKc(false); });
+$('btnKc').addEventListener('click', () => { kcSelbst = true; zeigeKc(true); });
+const tvGesperrt = () => { if (kcSelbst || !$('kc-box').hidden) return; $('kcHinweis').hidden = false; zeigeKc(true); };
+fetch('https://www.tradingview.com/favicon.ico', {mode: 'no-cors', signal: AbortSignal.timeout(6000)}).catch(tvGesperrt);
+setTimeout(() => { if (!$('tvBox').querySelector('iframe')) tvGesperrt(); }, 10000);   // Widget-Skript (s3.tradingview.com) nicht geladen
+
+// ---------- Laden und alle 15 Sekunden wiederholen
+let nextAt = 0, busy = false; const FAIL = {};
+async function load() {
+  if (busy || document.hidden) return; busy = true;   // Tab im Hintergrund: nichts abrufen $('dot').className = 'dot busy';
+  const failed = [];
+  await Promise.all(Object.entries(SOURCES).map(async ([k, s]) => {
+    const ttl = s.ttl || (S[k] && S[k].v.quelle ? 60000 : 0);   // Ersatzquellen (OKX/Gate.io) höchstens einmal pro Minute
+    if (S[k] && ttl && Date.now() - S[k].at < ttl) return;
+    if (FAIL[k] && s.ttl && Date.now() - FAIL[k] < (s.retry || 3 * 60 * 1000)) { failed.push(s.name); return; }   // gedrosselte Quelle 3 Minuten in Ruhe lassen
+    try { const v = await s.get(); if (k === 'liq' && v.key !== HM_IV) return;   // Heatmap: Zeitraum inzwischen umgestellt
+      S[k] = {v, at: Date.now()}; delete FAIL[k]; if (s.keep) try { localStorage.setItem('q_' + k, JSON.stringify(S[k].v)); } catch (e) {} }
+    catch (e) { FAIL[k] = Date.now(); failed.push(s.name);   // gedrosselte Quelle: letzten im Browser gemerkten Stand zeigen, statt Kacheln leer zu lassen
+      if (!S[k] && s.keep) try { const v = JSON.parse(localStorage.getItem('q_' + k)); if (v) S[k] = {v, at: 0}; } catch (e2) {} }
+  }));
+  try {
+    if (!S.cm) throw new Error('Coin Metrics nicht erreichbar');
+    D = compute(); render();
+    $('stand').textContent = 'Zuletzt aktualisiert: ' + new Date().toLocaleTimeString('de-DE') + ' Uhr';
+    $('dot').className = 'dot' + (failed.length ? ' err' : '');
+    $('fehler').textContent = failed.length ? 'Nicht erreichbar (alte Werte bleiben stehen): ' + failed.join(', ') : '';
+  } catch (e) {
+    console.error(e); $('dot').className = 'dot err';
+    $('fehler').textContent = 'Laden fehlgeschlagen: ' + e.message + '. Nächster Versuch automatisch.';
+    if (!D) $('lead').textContent = 'Die Daten konnten nicht geladen werden. Bitte Internetverbindung prüfen.';
+  }
+  nextAt = Date.now() + INTERVAL; busy = false;
+}
+setInterval(() => {
+  const left = nextAt - Date.now();
+  if (nextAt && left <= 0) load();
+  else if (nextAt) $('next').textContent = `Nächste Aktualisierung in ${Math.floor(left / 60000)}:${String(Math.floor(left / 1000) % 60).padStart(2, '0')} min`;
+}, 1000);
+$('jetzt').addEventListener('click', load);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
+$('zeitraum').addEventListener('change', (e) => { win = +e.target.value; drawCharts(true); });
+$('hmZeit').addEventListener('change', async (e) => {   // eigener Abruf, unabhängig vom 15-Sekunden-Takt
+  HM_IV = e.target.value; $('liqChart').replaceChildren('Lade Heatmap …');
+  try { const v = await Promise.race([SOURCES.liq.get(), wait(10000).then(() => { throw new Error('Zeitüberschreitung'); })]); if (v.key !== HM_IV) return; S.liq = {v, at: Date.now()}; } catch (err) { $('liqChart').textContent = 'Heatmap-Daten sind gerade nicht erreichbar.'; return; }   // spätestens nach 10 s Bescheid geben
+  if (D) renderLiq();
+});
+let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { drawCharts(true); if (D) renderLiq(); }, 150); });
+load();
+</script>
+</body>
+</html>

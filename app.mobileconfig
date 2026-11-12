@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>PayloadContent</key>
+	<array>
+		<dict>
+			<key>FullScreen</key>
+			<true/>
+			<key>Icon</key>
+			<data>
+			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
+			WA7wvq90HgUAAAAASUVORK5CYII=
+			</data>
+			<key>IsRemovable</key>
+			<true/>
+			<key>Label</key>
+			<string>Bitcoin Dashboard</string>
+			<key>PayloadDisplayName</key>
+			<string>Bitcoin Dashboard</string>
+			<key>PayloadIdentifier</key>
+			<string>app.netlify.bitcoin-dashboard-live.webclip</string>
+			<key>PayloadType</key>
+			<string>com.apple.webClip.managed</string>
+			<key>PayloadUUID</key>
+			<string>2D1B9E67-8A53-5DD5-AB05-9E470F4084FA</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+			<key>Precomposed</key>
+			<true/>
+			<key>URL</key>
+			<string>https://bitcoin-dashboard-live.netlify.app/</string>
+		</dict>
+	</array>
+	<key>PayloadDescription</key>
+	<string>Legt das Live-Bitcoin-Dashboard als App auf den Home-Bildschirm.</string>
+	<key>PayloadDisplayName</key>
+	<string>Bitcoin Dashboard</string>
+	<key>PayloadIdentifier</key>
+	<string>app.netlify.bitcoin-dashboard-live</string>
+	<key>PayloadRemovalDisallowed</key>
+	<false/>
+	<key>PayloadType</key>
+	<string>Configuration</string>
+	<key>PayloadUUID</key>
+	<string>BBD7DB9A-9A98-5D7F-A4B8-380F6EB55D84</string>
+	<key>PayloadVersion</key>
+	<integer>1</integer>
+</dict>
+</plist>
