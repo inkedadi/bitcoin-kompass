@@ -58,6 +58,9 @@
   .live { font-size: 12px; font-weight: 600; color: var(--ok); margin-left: 8px; } .live.off { color: var(--mut); }
   .etf-big { font-size: 32px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; line-height: 1.2; }
   .etf-tab { margin: 14px 0 12px; font-size: 13px; } .etf-tab td, .etf-tab th { padding: 7px 8px 7px 0; white-space: nowrap; } .etf-tab th:last-child, .etf-tab td:last-child { padding-right: 0; }
+  .etf-tage { display: flex; gap: 6px; margin: 6px 0 4px; }
+  .etf-tage > div { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 96px; padding: 8px 4px; border: 1px solid var(--line); border-radius: 8px; font-size: 12px; white-space: nowrap; }
+  .etf-tage i { display: block; width: 60%; border-radius: 3px; background: currentColor; opacity: .85; } .etf-tage .t-r { margin-bottom: auto; }
   .etf-net { font-weight: 700; } .etf-tab tr:last-child td { border-bottom: 0; }
   .etf-bar { height: 26px; font-size: 12px; margin: 4px 0 10px; }
   .liq-chart { height: 420px; min-height: 420px; border-radius: 8px; overflow: hidden; }
@@ -666,8 +669,13 @@ function etfHead(e) {
   if (!r.length) { e.textContent = 'ETF-Daten sind gerade nicht erreichbar.'; return; }
   const L = r[r.length - 1], cl = (v) => v >= 0 ? 'up' : 'down';
   let streak = 1; while (streak < r.length && Math.sign(r[r.length - 1 - streak].usd) === Math.sign(L.usd)) streak++;
-  e.append(el('div', 't-l', 'Netto-Fluss am ' + L.d.split('-').reverse().join('.')), el('div', 'etf-big ' + cl(L.usd), mUsd(L.usd)),
+  e.append(el('div', 't-l', 'Neuester Tag: Netto-Fluss am ' + L.d.split('-').reverse().join('.')), el('div', 'etf-big ' + cl(L.usd), mUsd(L.usd)),
     el('div', 't-r', `${L.usd >= 0 ? 'Zufluss' : 'Abfluss'} seit ${streak} ${streak === 1 ? 'Handelstag' : 'Handelstagen'} in Folge · ${(L.btc > 0 ? '+' : '') + de(L.btc)} BTC`));
+  // Wochenübersicht: die letzten 5 Handelstage einzeln, Balkenhöhe im Verhältnis zum größten Tag
+  const wo = r.slice(-5), mx = d3.max(wo, (x) => Math.abs(x.usd)) || 1, tage = el('div', 'etf-tage');
+  wo.forEach((x) => { const t = el('div', cl(x.usd)), b = el('i'); b.style.height = Math.max(3, Math.abs(x.usd) / mx * 34) + 'px';
+    t.append(el('span', 't-r', new Date(x.d + 'T12:00:00Z').toLocaleDateString('de-DE', {weekday: 'short', timeZone: 'UTC'}) + ' ' + x.d.slice(8) + '.' + x.d.slice(5, 7) + '.'), b, el('b', 'num', mK(x.usd))); tage.append(t); });
+  const tl = el('div', 't-l', 'Die letzten 5 Handelstage (Netto-Fluss je Tag in US-Dollar)'); tl.style.marginTop = '14px'; e.append(tl, tage);
   // Tabelle: Summe der Zufluss-Tage, Summe der Abfluss-Tage, Netto
   const fen = [['Tag ' + L.d.slice(8) + '.' + L.d.slice(5, 7) + '.', 1], ['1 Woche', 5], ['1 Monat', 21], ['3 Monate', 63]];   // erste Zeile = neuester gemeldeter Handelstag
   const tb = el('tbody');
