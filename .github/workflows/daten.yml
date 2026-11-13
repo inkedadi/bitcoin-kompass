@@ -1,0 +1,33 @@
+# Holt dreimal täglich die ETF-Flüsse und legt sie als etf_alt.json neben die Seite.
+# So sehen Besucher aktuelle Werte, ohne das Abruf-Limit der Quelle zu verbrauchen.
+name: ETF-Daten aktualisieren
+on:
+  schedule:
+    - cron: '20 5,13,21 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  daten:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Daten holen und prüfen
+        run: |
+          curl -sf -m 60 https://bitcoin-data.com/v1/etf-flow-btc -o flow.json
+          curl -sf -m 60 https://bitcoin-data.com/v1/etf-btc-total/last -o total.json
+          python3 - <<'PY'
+          import json
+          flow, total = json.load(open('flow.json')), json.load(open('total.json'))
+          assert isinstance(flow, list) and len(flow) > 30 and 'etfFlow' in flow[-1], 'ETF-Daten nicht lesbar'
+          alt = json.load(open('etf_alt.json'))
+          assert flow[-1]['d'] >= alt['flow'][-1]['d'], 'neue Daten älter als vorhandene'
+          json.dump({'flow': flow, 'total': total}, open('etf_alt.json', 'w'))
+          PY
+          rm -f flow.json total.json
+      - name: Speichern
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add etf_alt.json
+          git diff --cached --quiet || (git commit -m "ETF-Daten aktualisiert" && git push)
